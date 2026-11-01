@@ -27,7 +27,7 @@ async def bootstrap(admin_email: str) -> None:
             print(f"created {len(CATEGORIES)} categories")
         user = await s.scalar(select(User).where(User.email == email))
         if user is None:
-            s.add(User(name="QB Operator", email=email, locale=Locale.ru, is_platform_admin=True))
+            s.add(User(name="Easo Operator", email=email, locale=Locale.ru, is_platform_admin=True))
             print(f"created operator {email}")
         elif not user.is_platform_admin:
             user.is_platform_admin = True

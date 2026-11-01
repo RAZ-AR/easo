@@ -1,5 +1,5 @@
 [project]
-name = "qb"
+name = "easo"
 version = "0.1.0"
 description = "HoReCa purchasing marketplace for Armenia: multi-seller cart, price negotiation, documents"
 requires-python = ">=3.11,<3.12"

@@ -29,7 +29,7 @@ import { SellerSettings } from './pages/SellerSettings'
 import { Supplier } from './pages/Supplier'
 import { Clients } from './pages/Clients'
 
-const LANG_KEY = 'qb.lang'
+const LANG_KEY = 'easo.lang'
 const LANGS: Lang[] = ['hy', 'ru', 'en']
 
 function savedLang(): Lang {
@@ -341,9 +341,9 @@ function Sidebar({ nav, state }: { nav: NavItem[]; state: State }) {
     <aside className="sidebar">
       <div className="side-top">
         <Link to="/" className="side-brand">
-          <span className="brand">QB</span>
+          <span className="brand">Easo</span>
           <span>
-            <b>QB</b>
+            <b>Easo</b>
             <small>HoReCa</small>
           </span>
         </Link>
@@ -381,8 +381,8 @@ function MobileTopBar({ state }: { state: State }) {
   const dual = !!org && org.is_buyer && org.is_seller
   return (
     <header className="topbar">
-      <Link to="/" className="brand" aria-label="QB">
-        QB
+      <Link to="/" className="brand" aria-label="Easo">
+        Easo
       </Link>
       {dual ? <ModeSwitch compact /> : state === 'guest' ? <span className="who" /> : <Who />}
       <span className="spacer" />

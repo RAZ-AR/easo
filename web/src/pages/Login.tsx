@@ -6,17 +6,17 @@ import { useSession } from '../lib/session'
 
 // Seeded by `python -m app.seed` (backend/app/seed.py); shown only with DEV_LOGIN
 const DEMO_USERS: { group: 'buyers' | 'sellers' | 'platform'; email: string; label: string }[] = [
-  { group: 'buyers', email: 'arax@qb.local', label: 'Cafe Arax — owner' },
-  { group: 'buyers', email: 'chef@qb.local', label: 'Cafe Arax — chef' },
-  { group: 'buyers', email: 'nova@qb.local', label: 'Bar Nova — owner' },
-  { group: 'sellers', email: 'lori@qb.local', label: 'Լոռի Պանիր — seller' },
-  { group: 'sellers', email: 'pack@qb.local', label: 'Yerevan Pack — seller' },
-  { group: 'sellers', email: 'farm@qb.local', label: 'Green Valley — seller' },
-  { group: 'sellers', email: 'manager@qb.local', label: 'Լոռի Պանիր — manager' },
-  { group: 'sellers', email: 'baker@qb.local', label: 'Ararat Bakery — buys and sells' },
-  { group: 'sellers', email: 'honey@qb.local', label: 'Dilijan Honey — not verified yet' },
-  { group: 'platform', email: 'newbie@qb.local', label: 'No company yet' },
-  { group: 'platform', email: 'admin@qb.local', label: 'QB operator' },
+  { group: 'buyers', email: 'arax@easo.local', label: 'Cafe Arax — owner' },
+  { group: 'buyers', email: 'chef@easo.local', label: 'Cafe Arax — chef' },
+  { group: 'buyers', email: 'nova@easo.local', label: 'Bar Nova — owner' },
+  { group: 'sellers', email: 'lori@easo.local', label: 'Լոռի Պանիր — seller' },
+  { group: 'sellers', email: 'pack@easo.local', label: 'Yerevan Pack — seller' },
+  { group: 'sellers', email: 'farm@easo.local', label: 'Green Valley — seller' },
+  { group: 'sellers', email: 'manager@easo.local', label: 'Լոռի Պանիր — manager' },
+  { group: 'sellers', email: 'baker@easo.local', label: 'Ararat Bakery — buys and sells' },
+  { group: 'sellers', email: 'honey@easo.local', label: 'Dilijan Honey — not verified yet' },
+  { group: 'platform', email: 'newbie@easo.local', label: 'No company yet' },
+  { group: 'platform', email: 'admin@easo.local', label: 'Easo operator' },
 ]
 
 declare global {

@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import OutboxEvent
 from app.services import notifications
 
-log = logging.getLogger("qb.outbox")
+log = logging.getLogger("easo.outbox")
 
 Handler = Callable[[AsyncSession, OutboxEvent], Awaitable[None]]
 

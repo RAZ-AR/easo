@@ -22,7 +22,7 @@ MIRRORS = (  # public Overpass servers; the first one is often busy
 YEREVAN_AREA = 3600000000 + 364087  # relation "Երևան", admin_level 4
 OUT = Path(__file__).resolve().parent.parent / "web" / "src" / "data" / "yerevan-streets.json"
 
-# OSM district names -> the names QB uses (web/src/lib/districts.ts)
+# OSM district names -> the names Easo uses (web/src/lib/districts.ts)
 DISTRICTS = {
     "kentron": "Kentron",
     "arabkir": "Arabkir",
@@ -61,7 +61,7 @@ out tags center;
 
 def overpass(query: str) -> list[dict]:
     body = urllib.parse.urlencode({"data": query}).encode()
-    headers = {"User-Agent": "QB-streets-build/1.0 (+https://qb.ayoo.space)"}
+    headers = {"User-Agent": "Easo-streets-build/1.0 (+https://easo.ayoo.space)"}
     for url in MIRRORS:
         try:
             with urllib.request.urlopen(urllib.request.Request(url, body, headers), timeout=240) as r:
@@ -151,7 +151,7 @@ def main() -> None:
     OUT.write_text(json.dumps(rows, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(rows)} streets -> {OUT} ({OUT.stat().st_size // 1024} KB)")
     if unknown:
-        print("districts without a QB name:", ", ".join(sorted(unknown)), file=sys.stderr)
+        print("districts without a Easo name:", ", ".join(sorted(unknown)), file=sys.stderr)
 
 
 if __name__ == "__main__":

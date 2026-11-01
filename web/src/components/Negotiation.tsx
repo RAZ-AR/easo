@@ -1,4 +1,4 @@
-// The signature of QB: haggling shown as two prices converging on one line.
+// The signature of Easo: haggling shown as two prices converging on one line.
 import { useT } from '../i18n'
 import type { Offer, Order, OrderLine } from '../lib/api'
 import { amd } from '../lib/format'

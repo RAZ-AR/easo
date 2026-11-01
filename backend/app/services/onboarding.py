@@ -100,7 +100,7 @@ async def create_organization(
     data.phone, data.email, data.bank_account = contacts["phone"], contacts["email"], contacts["bank_account"]
     if await session.scalar(select(Organization.id).where(Organization.tin == tin)):
         # Joining an existing company needs an invite from its owner (not built yet)
-        raise Conflict("tin_taken", "this company is already on QB")
+        raise Conflict("tin_taken", "this company is already on Easo")
 
     # Requisites match the registry? Remember the source, so the operator knows what was typed by hand
     registry = get_registry()

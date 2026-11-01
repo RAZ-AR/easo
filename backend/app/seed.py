@@ -58,7 +58,7 @@ def _name(hy: str, ru: str, en: str) -> dict:
 
 async def seed() -> None:
     async with get_sessionmaker()() as s:
-        if await s.scalar(select(User).where(User.email == "admin@qb.local")):
+        if await s.scalar(select(User).where(User.email == "admin@easo.local")):
             print("demo data already present")
             return
 
@@ -84,7 +84,7 @@ async def seed() -> None:
                 ]
             )
 
-        admin = User(name="QB Operator", email="admin@qb.local", locale=Locale.ru, is_platform_admin=True)
+        admin = User(name="Easo Operator", email="admin@easo.local", locale=Locale.ru, is_platform_admin=True)
         s.add(admin)
 
         # --- sellers ---
@@ -142,9 +142,9 @@ async def seed() -> None:
             s.add_all(DeliveryZone(seller_id=org.id, district=d) for d in DISTRICTS)
 
         seller_users = [
-            User(name="Anahit (Lori)", email="lori@qb.local", locale=Locale.hy),
-            User(name="Arman (Pack)", email="pack@qb.local", locale=Locale.ru),
-            User(name="Gor (Farm)", email="farm@qb.local", locale=Locale.hy),
+            User(name="Anahit (Lori)", email="lori@easo.local", locale=Locale.hy),
+            User(name="Arman (Pack)", email="pack@easo.local", locale=Locale.ru),
+            User(name="Gor (Farm)", email="farm@easo.local", locale=Locale.hy),
         ]
         s.add_all(seller_users)
         await s.flush()
@@ -319,9 +319,9 @@ async def seed() -> None:
                 Address(organization_id=nova.id, label="Main", text="Komitas Ave 5", district="Arabkir"),
             ]
         )
-        owner_arax = User(name="Lilit (Arax)", email="arax@qb.local", locale=Locale.hy)
-        chef_arax = User(name="Davit (chef, Arax)", email="chef@qb.local", locale=Locale.ru)
-        owner_nova = User(name="Karen (Nova)", email="nova@qb.local", locale=Locale.en)
+        owner_arax = User(name="Lilit (Arax)", email="arax@easo.local", locale=Locale.hy)
+        chef_arax = User(name="Davit (chef, Arax)", email="chef@easo.local", locale=Locale.ru)
+        owner_nova = User(name="Karen (Nova)", email="nova@easo.local", locale=Locale.en)
         s.add_all([owner_arax, chef_arax, owner_nova])
         await s.flush()
         s.add_all(
@@ -355,10 +355,10 @@ async def seed() -> None:
         )
 
         # --- more roles to try ---
-        manager = User(name="Maria (manager, Lori)", email="manager@qb.local", locale=Locale.ru)
-        baker = User(name="Hasmik (Ararat Bakery)", email="baker@qb.local", locale=Locale.hy)
-        honey = User(name="Tigran (Dilijan Honey)", email="honey@qb.local", locale=Locale.ru)
-        newbie = User(name="New user (no company yet)", email="newbie@qb.local", locale=Locale.en)
+        manager = User(name="Maria (manager, Lori)", email="manager@easo.local", locale=Locale.ru)
+        baker = User(name="Hasmik (Ararat Bakery)", email="baker@easo.local", locale=Locale.hy)
+        honey = User(name="Tigran (Dilijan Honey)", email="honey@easo.local", locale=Locale.ru)
+        newbie = User(name="New user (no company yet)", email="newbie@easo.local", locale=Locale.en)
         s.add_all([manager, baker, honey, newbie])
         # One company that both buys (flour) and sells (bread): the Buy / Sell switch shows up for it
         bakery = Organization(
@@ -429,7 +429,7 @@ async def seed() -> None:
             await consents.accept_current(s, user_id)
         await s.commit()
         print(
-            "demo data created (all @qb.local): admin, lori, manager, pack, farm, arax, chef, nova, baker, "
+            "demo data created (all @easo.local): admin, lori, manager, pack, farm, arax, chef, nova, baker, "
             "honey, newbie"
         )
 

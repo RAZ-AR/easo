@@ -1,4 +1,4 @@
-# QB — MVP для Армении: экраны, торг, модель данных, стек
+# Easo — MVP для Армении: экраны, торг, модель данных, стек
 
 > Черновик v0.1 · 21.10.2026 · опирается на [01-research-and-concept.md](01-research-and-concept.md)
 > Валюта — AMD (целые драмы). Языки — армянский, русский, английский.
@@ -279,7 +279,7 @@ erDiagram
 |---|---|
 | `cart_items` | buyer_id, user_id, product_id, qty, note |
 | `checkouts` | id, buyer_id, user_id, address_id, created_at — одна отправка корзины |
-| `orders` | id, number (человекочитаемый, напр. `QB-24-000123`), checkout_id, buyer_id, seller_id, address_id, status, delivery_date, subtotal_amd, discount_amd, delivery_fee_amd, total_amd, commission_rate_bp, commission_amd, client_source (снимок), payment_status (`unpaid` / `paid`), buyer_note, seller_note |
+| `orders` | id, number (человекочитаемый, напр. `Easo-24-000123`), checkout_id, buyer_id, seller_id, address_id, status, delivery_date, subtotal_amd, discount_amd, delivery_fee_amd, total_amd, commission_rate_bp, commission_amd, client_source (снимок), payment_status (`unpaid` / `paid`), buyer_note, seller_note |
 | `order_lines` | order_id, product_id, name_snapshot, unit, qty_ordered, qty_confirmed, qty_received, list_price_amd, final_price_amd, price_source (`list` / `tier` / `agreement` / `negotiated`), line_total_amd |
 | `order_events` | order_id, at, actor_user_id (null = система/автопилот), type, payload (jsonb) — полный журнал |
 | `claims` | order_id, order_line_id, type (`short` / `damaged` / `wrong` / `missing`), qty, photos, comment, status (`open` / `accepted` / `rejected` / `escalated`), resolution_amd |
@@ -369,4 +369,4 @@ backend/app/
 3. Нужна ли в MVP «оплата при получении» как отдельная отметка, или достаточно «оплачено» от продавца?
 4. Кто модерирует продавцов: проверка ИНН вручную или по открытой базе?
 5. Можно ли продавцу отказаться от торга полностью и всё равно быть на платформе? (Предложение: да.)
-6. Связь с Gumar: заказы QB автоматически становятся расходами в Gumar у заведения — хорошая причина для пользователей Gumar прийти в QB. Делаем во второй очереди?
+6. Связь с Gumar: заказы Easo автоматически становятся расходами в Gumar у заведения — хорошая причина для пользователей Gumar прийти в Easo. Делаем во второй очереди?

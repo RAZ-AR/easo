@@ -16,9 +16,9 @@ async def test_me_requires_token(client):
 
 
 async def test_dev_login_and_me(client, seeded):
-    headers = await login(client, "chef@qb.local")
+    headers = await login(client, "chef@easo.local")
     me = (await client.get("/me", headers=headers)).json()
-    assert me["email"] == "chef@qb.local"
+    assert me["email"] == "chef@easo.local"
     [m] = me["memberships"]
     assert m["role"] == "buyer_staff"
     assert m["organization"]["display_name"] == "Cafe Arax"
@@ -26,19 +26,19 @@ async def test_dev_login_and_me(client, seeded):
 
 async def test_dev_login_off(client, seeded, monkeypatch):
     monkeypatch.setattr(get_settings(), "dev_login", False)
-    r = await client.post("/auth/dev-login", json={"email": "chef@qb.local"})
+    r = await client.post("/auth/dev-login", json={"email": "chef@easo.local"})
     assert r.status_code == 404
 
 
 async def test_categories(client, seeded):
-    headers = await login(client, "arax@qb.local")
+    headers = await login(client, "arax@easo.local")
     cats = (await client.get("/categories", headers=headers)).json()
     assert [c["slug"] for c in cats][:3] == ["disposables", "cleaning", "grocery"]
     assert cats[0]["name"]["hy"] == "Միանգամյա սպասք"
 
 
 async def test_products_list_has_seller_and_tiers(client, seeded):
-    headers = await login(client, "arax@qb.local")
+    headers = await login(client, "arax@easo.local")
     page = (await client.get("/products", headers=headers, params={"limit": 100})).json()
     assert page["total"] == 15  # Dilijan Honey is not verified: hidden
     cheese = next(p for p in page["items"] if p["name"]["en"] == "Lori cheese")
@@ -48,7 +48,7 @@ async def test_products_list_has_seller_and_tiers(client, seeded):
 
 
 async def test_search_in_three_scripts(client, seeded):
-    headers = await login(client, "arax@qb.local")
+    headers = await login(client, "arax@easo.local")
 
     async def names(q: str) -> set[str]:
         page = (await client.get("/products", headers=headers, params={"q": q})).json()
@@ -61,7 +61,7 @@ async def test_search_in_three_scripts(client, seeded):
 
 
 async def test_products_filters(client, seeded, sessionmaker):
-    headers = await login(client, "arax@qb.local")
+    headers = await login(client, "arax@easo.local")
     page = (await client.get("/products", headers=headers, params={"offers_only": True})).json()
     assert all(p["allow_offers"] for p in page["items"]) and page["total"] == 6
 
@@ -85,5 +85,5 @@ async def test_order_numbers_come_from_sequence(sessionmaker, seeded):
         s.add_all(orders)
         await s.commit()
         a, b = sorted(o.number for o in orders)
-    assert a.startswith("QB-") and len(a) == len("QB-26-000001")
+    assert a.startswith("EASO-") and len(a) == len("EASO-26-000001")
     assert int(b[-6:]) == int(a[-6:]) + 1

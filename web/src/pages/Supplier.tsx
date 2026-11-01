@@ -9,7 +9,7 @@ import { Catalog } from './Catalog'
 
 /**
  * A supplier's own page behind its standing link /s/<code>: who they are, how they deliver, their products.
- * Visitors who sign up from here become the supplier's clients with no QB commission.
+ * Visitors who sign up from here become the supplier's clients with no Easo commission.
  */
 export function Supplier() {
   const t = useT()

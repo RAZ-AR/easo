@@ -1,4 +1,8 @@
-{$DOMAIN} {
+# $DOMAIN is the site. $OLD_DOMAINS (optional, space-separated) are former addresses:
+# they keep a certificate and send every request to the same path on $DOMAIN.
+{$DOMAIN} {$OLD_DOMAINS} {
+	@old not host {$DOMAIN}
+	redir @old https://{$DOMAIN}{uri} permanent
 	encode zstd gzip
 	reverse_proxy web:80
 }

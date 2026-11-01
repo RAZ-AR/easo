@@ -2,7 +2,7 @@
  * The supplier link a visitor came through. Kept across sign-in and sign-up, so the new company becomes that
  * supplier's client (0% commission) once it is registered.
  */
-const KEY = 'qb.invite'
+const KEY = 'easo.invite'
 
 export const pendingInvite = {
   get(): string | null {

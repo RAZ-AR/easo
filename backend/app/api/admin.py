@@ -15,7 +15,7 @@ from app.services.verification import require_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-DEMO_DOMAIN = "@qb.local"  # fictional people from app.seed; real people are never offered here
+DEMO_DOMAIN = "@easo.local"  # fictional people from app.seed; real people are never offered here
 
 
 class DemoUserOut(BaseModel):

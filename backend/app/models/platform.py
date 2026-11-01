@@ -52,7 +52,7 @@ class CommissionRule(UUIDPk, Timestamped, Base):
 
 
 class CommissionStatement(UUIDPk, Timestamped, Base):
-    """Monthly commission invoice from QB to a seller."""
+    """Monthly commission invoice from Easo to a seller."""
 
     __tablename__ = "commission_statements"
     __table_args__ = (UniqueConstraint("seller_id", "period"),)

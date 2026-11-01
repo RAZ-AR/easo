@@ -33,7 +33,7 @@ export function Clients() {
   async function share() {
     if (!invite) return
     try {
-      await navigator.share({ title: 'QB', text: t('inv_share_text'), url: invite.url })
+      await navigator.share({ title: 'Easo', text: t('inv_share_text'), url: invite.url })
     } catch {
       /* closed the share sheet */
     }
@@ -70,7 +70,7 @@ export function Clients() {
                   {t('inv_share')}
                 </button>
               )}
-              <a className="btn ghost" href={api.supplierQr(invite.code)} download={`qb-${invite.code}.svg`}>
+              <a className="btn ghost" href={api.supplierQr(invite.code)} download={`easo-${invite.code}.svg`}>
                 {t('inv_qr')}
               </a>
               <Link className="btn ghost" to={`/s/${invite.code}`}>

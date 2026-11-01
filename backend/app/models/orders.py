@@ -102,12 +102,12 @@ class Order(UUIDPk, Timestamped, Base):
     # Read the server-generated number back on INSERT (RETURNING), so it is known right after flush
     __mapper_args__ = {"eager_defaults": True}
 
-    # Human-readable, e.g. QB-26-000123
+    # Human-readable, e.g. EASO-26-000123
     number: Mapped[str] = mapped_column(
         String(20),
         unique=True,
         server_default=text(
-            "'QB-' || to_char(now(), 'YY') || '-' || lpad(nextval('order_number_seq')::text, 6, '0')"
+            "'EASO-' || to_char(now(), 'YY') || '-' || lpad(nextval('order_number_seq')::text, 6, '0')"
         ),
     )
     checkout_id: Mapped[uuid.UUID | None] = mapped_column(

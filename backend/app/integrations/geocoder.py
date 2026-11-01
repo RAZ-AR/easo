@@ -19,11 +19,11 @@ from redis.exceptions import RedisError
 
 log = logging.getLogger(__name__)
 
-USER_AGENT = "QB/1.0 (+https://qb.ayoo.space; address check at sign-up)"
+USER_AGENT = "Easo/1.0 (+https://easo.ayoo.space; address check at sign-up)"
 YEREVAN_VIEWBOX = "44.36,40.25,44.65,40.06"  # lon1,lat1,lon2,lat2
 CACHE_S = 30 * 24 * 3600
 
-# Nominatim district names in the asked language -> the names QB uses (web/src/lib/districts.ts)
+# Nominatim district names in the asked language -> the names Easo uses (web/src/lib/districts.ts)
 _DISTRICT_NAMES = {
     "Kentron": ("Կենտրոն", "Кентрон", "Kentron"),
     "Arabkir": ("Արաբկիր", "Арабкир", "Arabkir"),
@@ -39,7 +39,9 @@ _DISTRICT_NAMES = {
     "Nork-Marash": ("Նորք-Մարաշ", "Норк-Мараш", "Nork-Marash", "Norq Marash"),
 }
 DISTRICTS = {
-    re.sub(r"[\s-]+", " ", name).lower(): qb for qb, names in _DISTRICT_NAMES.items() for name in names
+    re.sub(r"[\s-]+", " ", name).lower(): district
+    for district, names in _DISTRICT_NAMES.items()
+    for name in names
 }
 
 
@@ -60,7 +62,7 @@ class Place:
     text: str  # "Աբովյան փողոց 10, Երևան" in the asked language
     street: str | None
     house: str | None
-    district: str | None  # QB district name, None outside Yerevan or unknown
+    district: str | None  # Easo district name, None outside Yerevan or unknown
     city: str | None
     lat: float
     lng: float

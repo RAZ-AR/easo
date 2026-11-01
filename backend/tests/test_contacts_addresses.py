@@ -47,7 +47,7 @@ def test_email_and_account():
 
 @pytest.mark.usefixtures("seeded")
 async def test_requisites_are_checked_and_normalized(client):
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     r = await client.patch(
         "/organizations/me", headers=arax, json={"phone": "091-23-45-67", "email": "X@Cafe.am"}
     )
@@ -61,7 +61,7 @@ async def test_requisites_are_checked_and_normalized(client):
 
 @pytest.mark.usefixtures("seeded")
 async def test_several_addresses_with_receivers(client):
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     before = (await client.get("/addresses", headers=arax)).json()
     r = await client.post(
         "/addresses",
@@ -93,7 +93,7 @@ async def test_several_addresses_with_receivers(client):
     assert len((await client.get("/addresses", headers=arax)).json()) == len(before)
     assert (await client.get("/cart", headers=arax, params={"address_id": a["id"]})).status_code == 404
 
-    nova = await login(client, "nova@qb.local")
+    nova = await login(client, "nova@easo.local")
     assert (await client.delete(f"/addresses/{before[0]['id']}", headers=nova)).status_code == 404
 
 
@@ -175,7 +175,7 @@ async def test_geo_endpoint_falls_back_when_map_is_down(client, monkeypatch):
         raise geo.GeocoderUnavailable("down")
 
     monkeypatch.setattr(geo.NominatimGeocoder, "resolve", down)
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     r = await client.get("/geo/resolve", headers=arax, params={"q": "Abovyan 10", "lang": "ru"})
     assert r.json() == {
         "found": False,
@@ -212,7 +212,7 @@ def test_suggestion_rules():
 
 @pytest.mark.usefixtures("seeded")
 async def test_cart_suggestions(client):
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     cheese = await product_id(client, arax, "Lori cheese")
     await put(client, arax, cheese, 12)  # 42 000 at Lori: free delivery from 50 000
     items = (await client.get("/cart/suggestions", headers=arax)).json()

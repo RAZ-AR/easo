@@ -140,7 +140,7 @@ async def _upload(client, headers, data: bytes, name: str):
 
 @pytest.mark.usefixtures("seeded")
 async def test_import_csv_end_to_end(client):
-    lori = await login(client, "lori@qb.local")
+    lori = await login(client, "lori@easo.local")
     r = await _upload(client, lori, CSV.encode("cp1251"), "price.csv")
     assert r.status_code == 200, r.text
     parsed = r.json()
@@ -168,7 +168,7 @@ async def test_import_csv_end_to_end(client):
 
 @pytest.mark.usefixtures("seeded")
 async def test_import_xlsx_and_errors(client):
-    lori = await login(client, "lori@qb.local")
+    lori = await login(client, "lori@easo.local")
     book = Workbook()
     sheet = book.active
     sheet.append(["Կոդ", "Անվանում", "Գին", "Միավոր"])
@@ -191,5 +191,5 @@ async def test_import_xlsx_and_errors(client):
         "/seller/import/preview", headers=lori, json={"mapping": {"0": "price"}, "rows": []}
     )
     assert r.json()["details"]["problems"][0]["code"] == "map_sku_or_name"
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     assert (await _upload(client, arax, CSV.encode(), "price.csv")).status_code == 403

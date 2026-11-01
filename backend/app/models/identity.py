@@ -73,7 +73,7 @@ class VerificationStatus(StrEnum):
 
 
 class LegalDoc(StrEnum):
-    terms = "terms"  # public offer: the agreement between QB and a company
+    terms = "terms"  # public offer: the agreement between Easo and a company
     privacy = "privacy"  # personal data policy
 
 

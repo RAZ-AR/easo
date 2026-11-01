@@ -1,6 +1,6 @@
 """Order documents (docs/04-documents-and-verification.md).
 
-QB issues printable documents itself: invoice for payment, delivery note (with a transport section) and
+Easo issues printable documents itself: invoice for payment, delivery note (with a transport section) and
 the acceptance act. Each one freezes requisites, lines, VAT and totals in `payload` at issue time, so a
 later change of a company's bank account never rewrites an old invoice.
 

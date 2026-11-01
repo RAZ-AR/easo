@@ -41,7 +41,7 @@ async def test_lookup_by_tin(client):
     body = r.json()
     assert (body["tin"], body["found"], body["provider"]) == ("02744119", True, "demo")
     assert "Sevan Fish" in body["company"]["legal_name"] and body["company"]["tax_regime"] == "vat"
-    # A seeded company is already on QB
+    # A seeded company is already on Easo
     assert (await client.get("/registry/lookup", headers=me, params={"tin": "00000001"})).json()[
         "already_registered"
     ]
@@ -91,7 +91,7 @@ async def test_seller_signs_up_gets_verified_and_trades(client):
     assert v["required"] == ["state_registration"] and "haccp" in v["recommended"]
     assert len(v["files"]) == 2
 
-    admin = await login(client, "admin@qb.local")
+    admin = await login(client, "admin@easo.local")
     queue = (await client.get("/admin/verification", headers=admin)).json()
     assert [q["organization"]["display_name"] for q in queue] == ["Dilijan Honey", "Sevan Fish"]
     # Approving the company needs the registration extract approved first
@@ -123,9 +123,9 @@ async def test_files_are_private(client):
     )
     f = (await upload(client, me)).json()
     assert (await client.get(f"/files/{f['id']}", headers=me)).content == PDF
-    other = await login(client, "nova@qb.local")
+    other = await login(client, "nova@easo.local")
     assert (await client.get(f"/files/{f['id']}", headers=other)).status_code == 404
-    admin = await login(client, "admin@qb.local")
+    admin = await login(client, "admin@easo.local")
     assert (await client.get(f"/files/{f['id']}", headers=admin)).status_code == 200
 
 
@@ -148,7 +148,7 @@ async def test_buyer_signup_rules(client):
         ("phone", "bad_phone"),
         ("email", "bad_email"),
     }
-    # A TIN already on QB
+    # A TIN already on Easo
     r = await client.post(
         "/organizations",
         headers=me,
@@ -198,7 +198,7 @@ def test_vat_inside_inclusive_price():
 
 
 async def test_documents_follow_the_order(client):
-    nova, pack = await login(client, "nova@qb.local"), await login(client, "pack@qb.local")
+    nova, pack = await login(client, "nova@easo.local"), await login(client, "pack@easo.local")
     await put(
         client, nova, await product_id(client, nova, "Paper cup 250 ml"), 10
     )  # 42 000, VAT payer seller
@@ -258,13 +258,13 @@ async def test_documents_follow_the_order(client):
     assert inv2["number"].endswith("-0002")
 
     # Strangers see nothing
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     assert (await client.get(f"/documents/{inv['id']}", headers=arax)).status_code == 404
     assert (await client.get(f"/documents/{inv['id']}", headers=nova)).status_code == 200
 
 
 async def test_non_vat_seller_note(client):
-    arax, lori = await login(client, "arax@qb.local"), await login(client, "lori@qb.local")
+    arax, lori = await login(client, "arax@easo.local"), await login(client, "lori@easo.local")
     await put(client, arax, await product_id(client, arax, "Sour cream 20%"), 10)
     [order] = (await checkout(client, arax)).json()["orders"]
     await client.post(f"/orders/{order['id']}/confirm", headers=lori, json={})

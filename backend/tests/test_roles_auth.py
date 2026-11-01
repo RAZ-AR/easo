@@ -38,7 +38,7 @@ async def test_email_code_creates_user_and_signs_in(client):
 
 
 async def test_email_code_for_existing_user(client):
-    headers = await email_login(client, "arax@qb.local")
+    headers = await email_login(client, "arax@easo.local")
     me = (await client.get("/me", headers=headers)).json()
     assert me["memberships"][0]["organization"]["display_name"] == "Cafe Arax"
 
@@ -76,7 +76,7 @@ async def test_guest_sees_products_without_sellers(client):
     assert page["guest"] is True and page["total"] == 15
     assert all(p["seller"] is None for p in page["items"])
     # Signed-in users see the seller
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     assert (await client.get("/products", headers=arax)).json()["items"][0]["seller"] is not None
     # Guest cart rebuild: products by id
     ids = [p["id"] for p in page["items"][:2]]
@@ -92,7 +92,7 @@ async def test_guest_cannot_order(client):
 
 
 async def test_buyer_adds_seller_role_and_waits_for_verification(client, sessionmaker):
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     org = (await client.post("/organizations/me/roles", headers=arax, json={"role": "seller"})).json()
     assert (org["is_buyer"], org["is_seller"]) == (True, True)
     # The buyer check covered only the registry extract: selling goes back to the operator
@@ -112,7 +112,7 @@ async def test_buyer_adds_seller_role_and_waits_for_verification(client, session
 
 
 async def test_cannot_buy_own_products(client, sessionmaker):
-    lori = await login(client, "lori@qb.local")
+    lori = await login(client, "lori@easo.local")
     await client.post(
         "/organizations/me/roles", headers=lori, json={"role": "buyer", "delivery_address": "Stepanavan"}
     )
@@ -128,7 +128,7 @@ async def test_cannot_buy_own_products(client, sessionmaker):
 
 
 async def test_duplicate_tier_quantities_are_rejected(client):
-    lori = await login(client, "lori@qb.local")
+    lori = await login(client, "lori@easo.local")
     r = await client.post(
         "/seller/products",
         headers=lori,
@@ -217,7 +217,7 @@ PRODUCT = {
 
 
 async def test_seller_manages_products_and_terms(client):
-    lori = await login(client, "lori@qb.local")
+    lori = await login(client, "lori@easo.local")
     r = await client.post("/seller/products", headers=lori, json=PRODUCT)
     assert r.status_code == 201, r.text
     p = r.json()
@@ -255,13 +255,13 @@ async def test_seller_manages_products_and_terms(client):
 
 
 async def test_buyers_cannot_use_seller_cabinet(client):
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     r = await client.get("/seller/products", headers=arax)
     assert (r.status_code, r.json()["code"]) == (403, "not_a_seller")
 
 
 async def test_other_sellers_products_are_not_editable(client):
-    lori, pack = await login(client, "lori@qb.local"), await login(client, "pack@qb.local")
+    lori, pack = await login(client, "lori@easo.local"), await login(client, "pack@easo.local")
     p = (await client.post("/seller/products", headers=lori, json=PRODUCT)).json()
     assert (await client.put(f"/seller/products/{p['id']}", headers=pack, json=PRODUCT)).status_code == 404
 
@@ -271,20 +271,20 @@ async def test_other_sellers_products_are_not_editable(client):
 
 @pytest.mark.usefixtures("seeded")
 async def test_operator_can_sign_in_as_demo_user_only(client):
-    admin = await login(client, "admin@qb.local")
+    admin = await login(client, "admin@easo.local")
     users = (await client.get("/admin/demo-users", headers=admin)).json()
     emails = {u["email"] for u in users}
-    assert {"arax@qb.local", "baker@qb.local", "newbie@qb.local", "manager@qb.local"} <= emails
-    baker = next(u for u in users if u["email"] == "baker@qb.local")
+    assert {"arax@easo.local", "baker@easo.local", "newbie@easo.local", "manager@easo.local"} <= emails
+    baker = next(u for u in users if u["email"] == "baker@easo.local")
     assert (baker["roles"], baker["role"]) == (["buyer", "seller"], "owner")
 
     r = await client.post(f"/admin/demo-users/{baker['id']}/token", headers=admin)
     assert r.status_code == 200
     me = (await client.get("/me", headers={"Authorization": f"Bearer {r.json()['access_token']}"})).json()
-    assert me["email"] == "baker@qb.local"
+    assert me["email"] == "baker@easo.local"
 
     # Buyers cannot use it
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     assert (await client.get("/admin/demo-users", headers=arax)).status_code == 403
     assert (await client.post(f"/admin/demo-users/{baker['id']}/token", headers=arax)).status_code == 403
 

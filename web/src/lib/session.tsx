@@ -15,7 +15,7 @@ interface SessionState {
 }
 
 const SessionContext = createContext<SessionState | null>(null)
-const modeKey = (orgId: string) => `qb.mode.${orgId}`
+const modeKey = (orgId: string) => `easo.mode.${orgId}`
 
 function storedMode(org: Org | null): Mode {
   if (!org) return 'buyer'

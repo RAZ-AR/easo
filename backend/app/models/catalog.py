@@ -39,7 +39,7 @@ class RuleScope(StrEnum):
 
 class ClientSource(StrEnum):
     seller_invited = "seller_invited"  # the seller brought this buyer: 0% commission
-    platform = "platform"  # the buyer found the seller on QB
+    platform = "platform"  # the buyer found the seller on Easo
 
 
 class LinkStatus(StrEnum):

@@ -34,7 +34,7 @@ async def play() -> None:
             return
 
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://demo") as c:
-        h = {e: await _token(f"{e}@qb.local") for e in ("arax", "nova", "lori", "pack", "baker")}
+        h = {e: await _token(f"{e}@easo.local") for e in ("arax", "nova", "lori", "pack", "baker")}
 
         async def pid(who: str, name_en: str) -> str:
             page = (await c.get("/products", headers=h[who], params={"q": name_en, "limit": 100})).json()

@@ -6,7 +6,7 @@ import { date, tr } from '../lib/format'
 const PRINTABLE = ['invoice', 'delivery_note', 'acceptance_act'] as const
 const CONFIRMED = ['confirmed', 'delivering', 'delivered', 'accepted', 'disputed']
 
-/** Documents of an order: QB printouts, plus the numbers of the SRC e-invoice and e-waybill. */
+/** Documents of an order: Easo printouts, plus the numbers of the SRC e-invoice and e-waybill. */
 export function OrderDocuments({ order }: { order: Order }) {
   const t = useT()
   const lang = useLang()

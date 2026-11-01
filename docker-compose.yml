@@ -1,11 +1,11 @@
-name: qb
+name: easo
 
 # Ports differ from Gumar (5433/6379/8000/8080) so both stacks run side by side.
 x-backend: &backend
   build: ./backend
   env_file: .env
   environment:
-    DATABASE_URL: postgresql+asyncpg://qb:${POSTGRES_PASSWORD:-qb}@db:5432/qb
+    DATABASE_URL: postgresql+asyncpg://easo:${POSTGRES_PASSWORD:-easo}@db:5432/easo
     REDIS_URL: redis://redis:6379/0
     MEDIA_DIR: /app/media
   volumes:
@@ -18,15 +18,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: qb
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qb}
-      POSTGRES_DB: qb
+      POSTGRES_USER: easo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-easo}
+      POSTGRES_DB: easo
     ports: ["5435:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./deploy/initdb:/docker-entrypoint-initdb.d:ro  # creates qb_test for pytest
+      - ./deploy/initdb:/docker-entrypoint-initdb.d:ro  # creates easo_test for pytest
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U qb"]
+      test: ["CMD-SHELL", "pg_isready -U easo"]
       interval: 3s
       retries: 20
 
@@ -41,7 +41,7 @@ services:
 
   worker:
     <<: *backend
-    command: ["sh", "-c", "rq worker --url $$REDIS_URL qb"]
+    command: ["sh", "-c", "rq worker --url $$REDIS_URL easo"]
     depends_on: [api]
     restart: unless-stopped
 

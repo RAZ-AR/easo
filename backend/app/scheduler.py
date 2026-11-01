@@ -17,7 +17,7 @@ from app.platform.clock import utcnow
 from app.services import agreements, negotiation, notifications, orders
 from app.workers.outbox import dispatch_pending
 
-log = logging.getLogger("qb.scheduler")
+log = logging.getLogger("easo.scheduler")
 
 Job = Callable[[AsyncSession, datetime], Awaitable[int]]
 

@@ -49,7 +49,7 @@ async def test_same_error_is_mailed_once_per_cooldown(mailer):
     await _settle()
     assert [to for to, *_ in mailer.sent] == ["ops@example.com", "ops@example.com"]
     to, subject, text = mailer.sent[0]
-    assert subject.startswith("[QB test] ValueError in job test-")
+    assert subject.startswith("[Easo test] ValueError in job test-")
     assert "boom" in text and "Traceback" in text
 
 
@@ -62,19 +62,21 @@ async def test_alerts_off_without_an_address(mailer, monkeypatch):
 
 async def test_unexpected_api_error_is_reported_and_hidden(mailer):
     app = create_app()
+    # A path of its own: the alert cooldown lives in the real Redis and would mute a rerun
+    path = f"/explode-{uuid.uuid4().hex[:8]}"
 
-    @app.get("/explode")
+    @app.get(path)
     async def explode():
         raise RuntimeError(f"secret detail {uuid.uuid4()}")
 
     async with AsyncClient(
         transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://t"
     ) as c:
-        r = await c.get("/explode")
+        r = await c.get(path)
     await _settle()
     assert r.status_code == 500
     assert r.json()["code"] == "internal_error" and "secret" not in r.text
-    assert len(mailer.sent) == 1 and "GET /explode" in mailer.sent[0][1]
+    assert len(mailer.sent) == 1 and f"GET {path}" in mailer.sent[0][1]
 
 
 async def test_ready_needs_a_fresh_scheduler_heartbeat(client, sessionmaker, monkeypatch):

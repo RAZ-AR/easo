@@ -10,7 +10,7 @@ from app.platform.errors import DomainError
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title="QB API", version="0.1.0")
+    app = FastAPI(title="Easo API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

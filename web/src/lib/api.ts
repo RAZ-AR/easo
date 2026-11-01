@@ -235,7 +235,7 @@ export interface SellerClient {
 /** Which company and which side the user acts for: sent with every request. */
 export const context: { orgId: string | null; mode: Mode | null } = { orgId: null, mode: null }
 
-const TOKEN_KEY = 'qb.token'
+const TOKEN_KEY = 'easo.token'
 const BASE = '/api'
 
 /** Public media (product photos) by the path the API returns */

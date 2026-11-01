@@ -1,4 +1,4 @@
-name: qb-prod
+name: easo-prod
 
 # Production on one VM (docs/06-deploy-oracle.md): Caddy terminates HTTPS and is the only published service.
 # Run with:  docker compose -f docker-compose.prod.yml up -d --build
@@ -9,7 +9,7 @@ x-backend: &backend
   environment:
     ENV: prod
     DEV_LOGIN: "false"
-    DATABASE_URL: postgresql+asyncpg://qb:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/qb
+    DATABASE_URL: postgresql+asyncpg://easo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/easo
     REDIS_URL: redis://redis:6379/0
     MEDIA_DIR: /app/media
     WEB_APP_URL: https://${DOMAIN:?set DOMAIN in .env}
@@ -24,13 +24,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: qb
+      POSTGRES_USER: easo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: qb
+      POSTGRES_DB: easo
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U qb"]
+      test: ["CMD-SHELL", "pg_isready -U easo"]
       interval: 5s
       retries: 20
 
@@ -47,7 +47,7 @@ services:
 
   worker:
     <<: *backend
-    command: ["sh", "-c", "rq worker --url $$REDIS_URL qb"]
+    command: ["sh", "-c", "rq worker --url $$REDIS_URL easo"]
     depends_on: [api]
 
   scheduler:
@@ -74,6 +74,7 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+      OLD_DOMAINS: ${OLD_DOMAINS:-}  # former addresses, redirected to DOMAIN
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

@@ -18,7 +18,7 @@ interface CartState {
   error: string | null
 }
 
-const KEY = 'qb.guestCart'
+const KEY = 'easo.guestCart'
 const CartContext = createContext<CartState | null>(null)
 
 function readLocal(): Record<string, string> {

@@ -150,7 +150,7 @@ export function Onboarding() {
           <button className="btn primary block" disabled={busy || form.tin.replace(/\D/g, '').length < 8} onClick={find}>
             {t('find')}
           </button>
-          {lookup?.already_registered && <p className="warn">{t('already_on_qb')}</p>}
+          {lookup?.already_registered && <p className="warn">{t('already_on_easo')}</p>}
           {lookup?.company && !lookup.company.active && <p className="warn">{t('company_closed')}</p>}
           {lookup && !lookup.found && !lookup.already_registered && (
             <button className="link small" onClick={() => setStep('form')}>

@@ -26,7 +26,7 @@ async def bell(client, headers) -> dict:
 
 
 async def nova_offer_on_chanakh(client) -> tuple[dict, dict, dict]:
-    nova, lori = await login(client, "nova@qb.local"), await login(client, "lori@qb.local")
+    nova, lori = await login(client, "nova@easo.local"), await login(client, "lori@easo.local")
     await put(client, nova, await product_id(client, nova, "Chanakh cheese"), 7, offer=2900)
     [order] = (await checkout(client, nova)).json()["orders"]
     return order, nova, lori
@@ -44,7 +44,7 @@ async def test_new_order_rings_the_sellers_bell_not_the_buyers(client, sessionma
         "Bar Nova",
     )
     # The seller's manager hears too; the buyer who placed it does not
-    assert (await bell(client, await login(client, "manager@qb.local")))["unread"] == 1
+    assert (await bell(client, await login(client, "manager@easo.local")))["unread"] == 1
     assert (await bell(client, nova))["unread"] == 0
 
     # Retrying the same outbox events never notifies twice
@@ -92,7 +92,7 @@ async def test_order_chat(client, sessionmaker):
     assert (await client.get(f"/orders/{oid}", headers=lori)).json()["unread_messages"] == 0
 
     # Strangers see nothing
-    arax = await login(client, "arax@qb.local")
+    arax = await login(client, "arax@easo.local")
     assert (await client.get(f"/orders/{oid}/messages", headers=arax)).status_code == 404
     assert (
         await client.post(f"/orders/{oid}/messages", headers=arax, json={"text": "hi"})
@@ -102,7 +102,7 @@ async def test_order_chat(client, sessionmaker):
 async def test_email_copies_skip_demo_addresses_and_are_sent_once(client, sessionmaker, monkeypatch):
     order, nova, lori = await nova_offer_on_chanakh(client)
     async with sessionmaker() as s:
-        anahit = await s.scalar(select(User).where(User.email == "lori@qb.local"))
+        anahit = await s.scalar(select(User).where(User.email == "lori@easo.local"))
         real = User(name="Real owner", email="owner@lori.am")
         s.add(real)
         await s.flush()
@@ -131,7 +131,7 @@ async def test_email_copies_skip_demo_addresses_and_are_sent_once(client, sessio
 
 
 async def test_notification_settings_and_telegram_link(client, sessionmaker):
-    nova = await login(client, "nova@qb.local")
+    nova = await login(client, "nova@easo.local")
     s0 = (await client.get("/me/notifications", headers=nova)).json()
     assert (s0["email"], s0["telegram"], s0["telegram_linked"]) == (True, True, False)
     r = await client.put("/me/notifications", headers=nova, json={"email": False, "telegram": True})
@@ -172,7 +172,7 @@ async def test_telegram_sign_in_finds_user_who_linked_the_bot(client, sessionmak
     from app.config import get_settings
 
     monkeypatch.setattr(get_settings(), "telegram_bot_token", "123:test")
-    nova = await login(client, "nova@qb.local")
+    nova = await login(client, "nova@easo.local")
     nova_id = (await client.get("/me", headers=nova)).json()["id"]
     token = (await client.post("/me/telegram/link", headers=nova)).json()["url"].split("start=")[1]
     async with sessionmaker() as s:
@@ -191,7 +191,7 @@ async def test_telegram_sign_in_finds_user_who_linked_the_bot(client, sessionmak
 
 
 async def test_document_register(client, sessionmaker):
-    nova, pack = await login(client, "nova@qb.local"), await login(client, "pack@qb.local")
+    nova, pack = await login(client, "nova@easo.local"), await login(client, "pack@easo.local")
     await put(client, nova, await product_id(client, nova, "Paper cup 250 ml"), 10)
     [order] = (await checkout(client, nova)).json()["orders"]
     await client.post(f"/orders/{order['id']}/confirm", headers=pack, json={})
@@ -212,7 +212,9 @@ async def test_document_register(client, sessionmaker):
     future = (await client.get("/documents", headers=pack, params={"date_from": "2099-01-01"})).json()
     assert future["total"] == 0
     # Another seller sees none of them
-    assert (await client.get("/documents", headers=await login(client, "lori@qb.local"))).json()["total"] == 0
+    assert (await client.get("/documents", headers=await login(client, "lori@easo.local"))).json()[
+        "total"
+    ] == 0
     # The bell is per user and app-only
     async with sessionmaker() as s:
         assert not await s.scalar(select(Notification.id).where(Notification.channel == Channel.telegram))

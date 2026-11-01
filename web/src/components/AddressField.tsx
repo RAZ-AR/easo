@@ -19,7 +19,7 @@ export function AddressField({
   label: string
   value: string
   onChange: (value: string) => void
-  /** The address was found on the map: its district (QB name) and coordinates */
+  /** The address was found on the map: its district (Easo name) and coordinates */
   onResolved?: (place: Place) => void
   /** A street was picked that lies in one district only */
   onDistrict?: (district: string) => void

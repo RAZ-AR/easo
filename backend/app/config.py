@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
 
     env: Literal["dev", "test", "prod"] = "dev"
-    database_url: str = "postgresql+asyncpg://qb:qb@localhost:5435/qb"
+    database_url: str = "postgresql+asyncpg://easo:easo@localhost:5435/easo"
     redis_url: str = "redis://localhost:6381/0"
     cors_origins: list[str] = ["http://localhost:5180"]
 
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # E-mail login codes: "console" logs the code (development), "resend" sends through resend.com
     mail_provider: Literal["console", "resend"] = "console"
     resend_api_key: str = ""
-    mail_from: str = "QB <no-reply@example.com>"
+    mail_from: str = "Easo <no-reply@example.com>"
     login_code_ttl_minutes: int = 10
     # Passwordless sign-in as any seeded user, for local testing only. Never in prod.
     dev_login: bool = False

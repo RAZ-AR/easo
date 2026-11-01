@@ -118,7 +118,9 @@ async def test_sign_up_through_a_link(client, as_user, sessionmaker):  # noqa: F
     me = await email_login(client, "owner@cascade.am")
     r = await client.post("/organizations", headers=me, json={**body, "tin": "02598301", "invite_code": code})
     assert r.status_code == 201, r.text
-    assert (await link_of(sessionmaker, "Լոռի Պանիր", "Cascade Cafe LLC")).source == ClientSource.seller_invited
+    assert (
+        await link_of(sessionmaker, "Լոռի Պանիր", "Cascade Cafe LLC")
+    ).source == ClientSource.seller_invited
 
     # A stale link does not stop the sign-up
     other = await email_login(client, "owner@dolmama.am")

@@ -21,7 +21,7 @@ from app.integrations.mailer import get_mailer
 from app.models import Channel, Membership, Notification, Order, Organization, OutboxEvent, User
 from app.platform.errors import ValidationFailed
 
-log = logging.getLogger("qb.notify")
+log = logging.getLogger("easo.notify")
 
 # Outbox topic -> notification type. Anything else (placed, offer_made, ...) is either covered by another
 # event or is internal, and stays silent.
@@ -114,8 +114,8 @@ TEXT: dict[str, dict[str, str]] = {
         "en": "{counterparty} · {number}: {text}",
     },
 }
-SUBJECT = {"hy": "QB՝ {number}", "ru": "QB: {number}", "en": "QB: {number}"}
-DEMO_DOMAIN = "@qb.local"  # fictional users: no real mailbox
+SUBJECT = {"hy": "Easo՝ {number}", "ru": "Easo: {number}", "en": "Easo: {number}"}
+DEMO_DOMAIN = "@easo.local"  # fictional users: no real mailbox
 MAX_SEND_ATTEMPTS = 5
 
 
@@ -320,7 +320,7 @@ async def link_telegram(session: AsyncSession, token: str, telegram_id: int) -> 
     user = await session.get(User, user_id)
     if user is None:
         raise ValidationFailed([{"field": "token", "code": "bad_link"}])
-    # One Telegram account belongs to one QB user: move it if it was linked elsewhere
+    # One Telegram account belongs to one Easo user: move it if it was linked elsewhere
     await session.execute(
         update(User).where(User.telegram_id == telegram_id, User.id != user.id).values(telegram_id=None)
     )

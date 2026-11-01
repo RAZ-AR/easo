@@ -1,9 +1,9 @@
 #!/bin/sh
-# Daily backup of the database and uploaded files into ~/qb-backups (keeps 14 days locally).
-# Cron:  0 3 * * *  cd ~/qb && ./deploy/backup.sh >> ~/qb-backups/backup.log 2>&1
+# Daily backup of the database and uploaded files into ~/easo-backups (keeps 14 days locally).
+# Cron:  0 3 * * *  cd ~/easo && ./deploy/backup.sh >> ~/easo-backups/backup.log 2>&1
 #
 # Optional, from .env:
-#   BACKUP_REMOTE    rclone target outside this machine, e.g. "oci:qb-backups" (Oracle Object Storage);
+#   BACKUP_REMOTE    rclone target outside this machine, e.g. "oci:easo-backups" (Oracle Object Storage);
 #                    copies are kept there for BACKUP_REMOTE_DAYS (default 60)
 #   BACKUP_PING_URL  healthchecks.io check: pinged on success, "/fail" on error; silence = alert
 set -eu
@@ -19,12 +19,12 @@ ping_status() {
 }
 trap 'ping_status /fail' EXIT
 
-dir="${BACKUP_DIR:-$HOME/qb-backups}"
+dir="${BACKUP_DIR:-$HOME/easo-backups}"
 stamp="$(date +%Y%m%d-%H%M)"
 mkdir -p "$dir"
-compose="docker compose -f ${QB_COMPOSE_FILE:-docker-compose.prod.yml}"
+compose="docker compose -f ${EASO_COMPOSE_FILE:-docker-compose.prod.yml}"
 
-$compose exec -T db pg_dump -U qb qb | gzip > "$dir/db-$stamp.sql.gz"
+$compose exec -T db pg_dump -U easo easo | gzip > "$dir/db-$stamp.sql.gz"
 $compose exec -T api tar -C /app -czf - media > "$dir/media-$stamp.tar.gz"
 
 # A broken or empty archive must not count as a backup

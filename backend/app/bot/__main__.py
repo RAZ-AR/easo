@@ -1,4 +1,4 @@
-"""Telegram bot: `python -m app.bot`. /start opens the web app; /start <token> links the chat to a QB user
+"""Telegram bot: `python -m app.bot`. /start opens the web app; /start <token> links the chat to a Easo user
 so that notifications arrive here (the token comes from "Link Telegram" in the web app).
 
 Notifications themselves are sent by the scheduler through the Bot API (app/integrations/telegram_sender.py).
@@ -16,25 +16,25 @@ from app.db import get_sessionmaker
 from app.platform.errors import ValidationFailed
 from app.services import notifications
 
-log = logging.getLogger("qb.bot")
+log = logging.getLogger("easo.bot")
 dp = Dispatcher()
 
 GREETING = {
-    "hy": "Բարի գալուստ QB՝ ապրանքների պատվեր HoReCa-ի համար։",
-    "ru": "Добро пожаловать в QB — закупки для HoReCa.",
-    "en": "Welcome to QB — purchasing for HoReCa.",
+    "hy": "Բարի գալուստ Easo՝ ապրանքների պատվեր HoReCa-ի համար։",
+    "ru": "Добро пожаловать в Easo — закупки для HoReCa.",
+    "en": "Welcome to Easo — purchasing for HoReCa.",
 }
 
 
 LINKED = {
-    "hy": "Պատրաստ է․ QB-ի ծանուցումները կգան այստեղ։",
-    "ru": "Готово: уведомления QB будут приходить сюда.",
-    "en": "Done: QB notifications will arrive here.",
+    "hy": "Պատրաստ է․ Easo-ի ծանուցումները կգան այստեղ։",
+    "ru": "Готово: уведомления Easo будут приходить сюда.",
+    "en": "Done: Easo notifications will arrive here.",
 }
 LINK_FAILED = {
-    "hy": "Հղումը հնացել է։ Բացեք QB-ն և նորից սեղմեք «Կապել Telegram-ը»։",
-    "ru": "Ссылка устарела. Откройте QB и снова нажмите «Привязать Telegram».",
-    "en": "The link has expired. Open QB and press “Link Telegram” again.",
+    "hy": "Հղումը հնացել է։ Բացեք Easo-ն և նորից սեղմեք «Կապել Telegram-ը»։",
+    "ru": "Ссылка устарела. Откройте Easo и снова нажмите «Привязать Telegram».",
+    "en": "The link has expired. Open Easo and press “Link Telegram” again.",
 }
 
 
@@ -59,9 +59,9 @@ async def start(message: Message) -> None:
     lang = (message.from_user.language_code or "hy")[:2] if message.from_user else "hy"
     url = get_settings().web_app_url
     button = (
-        InlineKeyboardButton(text="QB", web_app=WebAppInfo(url=url))
+        InlineKeyboardButton(text="Easo", web_app=WebAppInfo(url=url))
         if url.startswith("https://")
-        else InlineKeyboardButton(text="QB", url=url)
+        else InlineKeyboardButton(text="Easo", url=url)
     )
     await message.answer(
         GREETING.get(lang, GREETING["hy"]), reply_markup=InlineKeyboardMarkup(inline_keyboard=[[button]])

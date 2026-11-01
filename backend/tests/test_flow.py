@@ -24,7 +24,7 @@ async def as_user(client):
 
     async def headers(email: str) -> dict:
         if email not in cache:
-            cache[email] = await login(client, f"{email}@qb.local")
+            cache[email] = await login(client, f"{email}@easo.local")
         return cache[email]
 
     return headers
@@ -66,7 +66,7 @@ async def test_autopilot_accepts_offer_at_checkout(client, as_user):
     assert (line["final_price_amd"], line["price_source"]) == (3300, "negotiated")
     # 12 x 3 300 = 39 600 + delivery 1 000 (free from 50 000)
     assert (order["subtotal_amd"], order["delivery_fee_amd"], order["total_amd"]) == (39_600, 1000, 40_600)
-    assert order["number"].startswith("QB-")
+    assert order["number"].startswith("EASO-")
     # The cart is emptied
     assert (await client.get("/cart", headers=arax)).json()["groups"] == []
 

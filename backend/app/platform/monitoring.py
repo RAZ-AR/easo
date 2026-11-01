@@ -22,9 +22,9 @@ from app.config import get_settings
 from app.db import get_sessionmaker
 from app.integrations.mailer import get_mailer
 
-log = logging.getLogger("qb.monitoring")
+log = logging.getLogger("easo.monitoring")
 
-HEARTBEAT_KEY = "qb:heartbeat:scheduler"
+HEARTBEAT_KEY = "easo:heartbeat:scheduler"
 HEARTBEAT_MAX_AGE_S = 180  # the scheduler beats every minute; three missed beats = down
 
 _client: aioredis.Redis | None = None
@@ -80,7 +80,7 @@ def _fingerprint(exc: BaseException, where: str) -> str:
 
 async def _first_time(key: str, cooldown_s: int) -> bool:
     try:
-        return bool(await _redis().set(f"qb:alert:{key}", "1", nx=True, ex=cooldown_s))
+        return bool(await _redis().set(f"easo:alert:{key}", "1", nx=True, ex=cooldown_s))
     except (RedisError, OSError):
         now = time.monotonic()
         if now - _sent_here.get(key, -cooldown_s - 1) < cooldown_s:
@@ -92,7 +92,7 @@ async def _first_time(key: str, cooldown_s: int) -> bool:
 async def _send(where: str, exc: BaseException) -> None:
     s = get_settings()
     tb = "".join(traceback.format_exception(exc))[-6000:]
-    subject = f"[QB {s.env}] {type(exc).__name__} in {where}"[:200]
+    subject = f"[Easo {s.env}] {type(exc).__name__} in {where}"[:200]
     body = (
         f"{datetime.now(UTC):%Y-%m-%d %H:%M:%S} UTC\n{where}\n\n{type(exc).__name__}: {exc}\n\n{tb}\n"
         f"The same error is not reported again for {s.alert_cooldown_s // 60} minutes."

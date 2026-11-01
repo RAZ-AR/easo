@@ -68,7 +68,7 @@ export function PriceImport() {
     const url = URL.createObjectURL(new Blob(['﻿' + TEMPLATE], { type: 'text/csv;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = 'qb-price-template.csv'
+    a.download = 'easo-price-template.csv'
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 10_000)
   }

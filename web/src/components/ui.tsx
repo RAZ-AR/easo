@@ -1,4 +1,4 @@
-// Small shared pieces of the QB visual language: icons, product tiles, countdowns, the order-minimum meter.
+// Small shared pieces of the Easo visual language: icons, product tiles, countdowns, the order-minimum meter.
 import { useEffect, useState } from 'react'
 import { useT } from '../i18n'
 import { amd } from '../lib/format'

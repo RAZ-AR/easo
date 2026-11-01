@@ -1,4 +1,4 @@
-# QB — закупки для HoReCa в Армении
+# Easo — закупки для HoReCa в Армении
 
 Маркетплейс: оптовики, магазины и производители продают продукты и расходники, кафе и рестораны покупают.
 Одна корзина на нескольких продавцов, торг (предложить цену, автопилот продавца), позже — счета и путевые листы
@@ -8,7 +8,8 @@
 документы по законодательству РА, регистрация по ИНН и верификация — [docs/04-documents-and-verification.md](docs/04-documents-and-verification.md),
 вход, гостевой режим, кабинеты и две роли — [docs/05-cabinets-and-auth.md](docs/05-cabinets-and-auth.md),
 роадмап до Нового года — [docs/07-roadmap.md](docs/07-roadmap.md),
-выход на рынок (GTM, пилот, цены, метрики) — [docs/08-go-to-market.md](docs/08-go-to-market.md).
+выход на рынок (GTM, пилот, цены, метрики) — [docs/08-go-to-market.md](docs/08-go-to-market.md),
+структура и тексты лендинга — [docs/09-landing.md](docs/09-landing.md).
 
 Языки интерфейса и каталога: армянский (`hy`), русский (`ru`), английский (`en`). Валюта — AMD, целые драмы.
 Пользователю всё пишем по-русски; код, комментарии и коммиты — по-английски.
@@ -31,7 +32,7 @@
 | PWA (nginx, `/api` → API) | http://localhost:8090 |
 | API напрямую | http://localhost:8010 (docs: `/docs`) |
 | Vite dev | http://localhost:5180 |
-| PostgreSQL | 5435 (`qb` и `qb_test`) |
+| PostgreSQL | 5435 (`easo` и `easo_test`) |
 | Redis | 6381 |
 
 ## Команды
@@ -39,11 +40,11 @@
 ```bash
 cp .env.example .env
 docker compose up -d --build                     # всё; api сам применяет миграции
-docker compose run --rm api python -m app.seed   # демо-данные (вход: DEV_LOGIN, *@qb.local)
+docker compose run --rm api python -m app.seed   # демо-данные (вход: DEV_LOGIN, *@easo.local)
 docker compose run --rm api python -m app.demo   # демо-данные + 6 заказов в разных состояниях
 
-# тесты и линтер бэкенда (база qb_test в том же контейнере db)
-docker compose run --rm -v "$PWD/backend:/app" -e TEST_DATABASE_URL=postgresql+asyncpg://qb:qb@db:5432/qb_test api pytest -q
+# тесты и линтер бэкенда (база easo_test в том же контейнере db)
+docker compose run --rm -v "$PWD/backend:/app" api pytest -q   # TEST_DATABASE_URL: по умолчанию DATABASE_URL → easo_test
 docker compose run --rm -v "$PWD/backend:/app" api sh -c "ruff check . && ruff format --check ."
 
 # новая миграция после правки моделей
@@ -53,6 +54,10 @@ docker compose run --rm -v "$PWD/backend:/app" api alembic check
 # фронтенд
 cd web && npm install && npm run dev   # http://localhost:5180, проксирует /api на :8010
 npm test && npm run lint && npx tsc -b
+
+# e2e (Playwright, web/e2e): по поднятому стеку с демо-данными, http://localhost:8090
+npx playwright install chromium        # один раз
+npm run e2e                            # E2E_BASE_URL=http://localhost:5180 — по dev-серверу; npm run e2e:ui — с окном
 ```
 
 ## Прод
@@ -83,7 +88,7 @@ backend/app/
 │                  # invites (/s/<код>, /seller/invite, /seller/clients); commit здесь
 ├── auth/          # JWT, вход по коду на почту / Google / Telegram, current_actor (заголовки X-Org-Id, X-Mode)
 ├── core/          # search (search_text + транслит hy/ru → latin)
-├── workers/       # outbox-диспетчер (пока только лог), очередь RQ "qb"
+├── workers/       # outbox-диспетчер (пока только лог), очередь RQ "easo"
 ├── bot/           # Telegram-бот: /start и привязка чата к пользователю для уведомлений
 ├── scheduler.py   # истечение торгов, автоприёмка 48 ч, истечение контрактов, outbox каждые 2 с
 ├── seed.py        # демо-данные: 5 продавцов (один не проверен, одна пекарня ещё и покупает), 3 покупателя
@@ -122,7 +127,7 @@ backend/app/
 - **Уведомления:** событие заказа в `outbox` → `services/notifications.fan_out` создаёт строку на каждого участника
   другой стороны: канал `app` (колокольчик) сразу, копии `email` / `telegram` отправляет `deliver_pending` в планировщике
   (повтор до 5 раз, `dedupe_key` не даёт задвоить). Тексты — `TEXT` на сервере и `NOTICES` в `web/src/i18n.ts`, держать
-  одинаковыми. Новый тип события — добавить в `KINDS`. Адреса `@qb.local` писем не получают.
+  одинаковыми. Новый тип события — добавить в `KINDS`. Адреса `@easo.local` писем не получают.
 - **Чат по заказу** — `order_messages`, событие `order.message`; чтение чата гасит его уведомления.
 - **Telegram:** привязка через `t.me/<бот>?start=<токен>` (подписанный, 15 минут), бот в профиле compose `bot`.
 - **Импорт прайса** (`/seller/import`): `core/spreadsheet.read_table` читает .xlsx (openpyxl) или .csv (`;`/`,`, UTF-8

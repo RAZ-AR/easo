@@ -57,7 +57,7 @@ def test_specs_follow_the_category():
 
 
 async def test_seller_fills_the_card_and_buyers_see_it(client):
-    lori, arax = await login(client, "lori@qb.local"), await login(client, "arax@qb.local")
+    lori, arax = await login(client, "lori@easo.local"), await login(client, "arax@easo.local")
     cheese = await product_id(client, arax, "Lori cheese")
     mine = next(p for p in (await client.get("/seller/products", headers=lori)).json() if p["id"] == cheese)
     body = {
@@ -146,7 +146,7 @@ async def test_seller_fills_the_card_and_buyers_see_it(client):
     assert (file.status_code, file.content) == (200, PDF)
 
     # Cleanup works and stays inside the seller's own products
-    pack = await login(client, "pack@qb.local")
+    pack = await login(client, "pack@easo.local")
     assert (
         await client.delete(f"/seller/products/{cheese}/documents/{doc['id']}", headers=pack)
     ).status_code == 404

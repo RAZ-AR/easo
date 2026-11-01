@@ -17,13 +17,13 @@ type Doc = Record<Lang, { title: string; sections: Section[] }>
 
 const TERMS: Doc = {
   ru: {
-    title: 'Публичная оферта QB',
+    title: 'Публичная оферта Easo',
     sections: [
       {
-        title: '1. Что такое QB',
+        title: '1. Что такое Easo',
         items: [
-          'QB — площадка, на которой поставщики (продавцы) выставляют товары и услуги, а заведения (покупатели) их заказывают.',
-          'QB не является стороной договора поставки: договор заключается между покупателем и продавцом, QB помогает его оформить.',
+          'Easo — площадка, на которой поставщики (продавцы) выставляют товары и услуги, а заведения (покупатели) их заказывают.',
+          'Easo не является стороной договора поставки: договор заключается между покупателем и продавцом, Easo помогает его оформить.',
         ],
       },
       {
@@ -43,33 +43,33 @@ const TERMS: Doc = {
         ],
       },
       {
-        title: '4. Вознаграждение QB',
+        title: '4. Вознаграждение Easo',
         items: [
           'С клиентов, которых продавец привёл сам, комиссия не берётся.',
-          'С заказов клиентов, пришедших через QB, продавец платит комиссию по действующим тарифам.',
+          'С заказов клиентов, пришедших через Easo, продавец платит комиссию по действующим тарифам.',
         ],
       },
       {
         title: '5. Ответственность',
         items: [
           'За качество, количество и сроки поставки отвечает продавец, за оплату — покупатель.',
-          'QB отвечает за работу площадки и сохранность данных.',
+          'Easo отвечает за работу площадки и сохранность данных.',
         ],
       },
       {
         title: '6. Изменения оферты',
-        items: ['При существенных изменениях QB попросит принять новую редакцию при следующем входе.'],
+        items: ['При существенных изменениях Easo попросит принять новую редакцию при следующем входе.'],
       },
     ],
   },
   hy: {
-    title: 'QB հանրային օֆերտա',
+    title: 'Easo հանրային օֆերտա',
     sections: [
       {
-        title: '1. Ի՞նչ է QB-ն',
+        title: '1. Ի՞նչ է Easo-ն',
         items: [
-          'QB-ն հարթակ է, որտեղ մատակարարները (վաճառողները) ներկայացնում են ապրանքներ և ծառայություններ, իսկ հաստատությունները (գնորդները) պատվիրում են դրանք։',
-          'QB-ն մատակարարման պայմանագրի կողմ չէ. պայմանագիրը կնքվում է գնորդի և վաճառողի միջև։',
+          'Easo-ն հարթակ է, որտեղ մատակարարները (վաճառողները) ներկայացնում են ապրանքներ և ծառայություններ, իսկ հաստատությունները (գնորդները) պատվիրում են դրանք։',
+          'Easo-ն մատակարարման պայմանագրի կողմ չէ. պայմանագիրը կնքվում է գնորդի և վաճառողի միջև։',
         ],
       },
       {
@@ -88,10 +88,10 @@ const TERMS: Doc = {
         ],
       },
       {
-        title: '4. QB-ի վարձատրություն',
+        title: '4. Easo-ի վարձատրություն',
         items: [
           'Վաճառողի կողմից բերված հաճախորդներից միջնորդավճար չի գանձվում։',
-          'QB-ի միջոցով եկած հաճախորդների պատվերներից վաճառողը վճարում է միջնորդավճար՝ գործող սակագներով։',
+          'Easo-ի միջոցով եկած հաճախորդների պատվերներից վաճառողը վճարում է միջնորդավճար՝ գործող սակագներով։',
         ],
       },
       {
@@ -100,18 +100,18 @@ const TERMS: Doc = {
       },
       {
         title: '6. Փոփոխություններ',
-        items: ['Էական փոփոխությունների դեպքում QB-ն կխնդրի ընդունել նոր խմբագրությունը հաջորդ մուտքի ժամանակ։'],
+        items: ['Էական փոփոխությունների դեպքում Easo-ն կխնդրի ընդունել նոր խմբագրությունը հաջորդ մուտքի ժամանակ։'],
       },
     ],
   },
   en: {
-    title: 'QB public offer',
+    title: 'Easo public offer',
     sections: [
       {
-        title: '1. What QB is',
+        title: '1. What Easo is',
         items: [
-          'QB is a marketplace where suppliers (sellers) list goods and services and venues (buyers) order them.',
-          'QB is not a party to the supply contract: it is made between the buyer and the seller, QB helps to put it on paper.',
+          'Easo is a marketplace where suppliers (sellers) list goods and services and venues (buyers) order them.',
+          'Easo is not a party to the supply contract: it is made between the buyer and the seller, Easo helps to put it on paper.',
         ],
       },
       {
@@ -130,10 +130,10 @@ const TERMS: Doc = {
         ],
       },
       {
-        title: '4. QB fees',
+        title: '4. Easo fees',
         items: [
           'No commission on clients the seller brought themselves.',
-          'Orders from clients who came through QB carry a commission at the current rates.',
+          'Orders from clients who came through Easo carry a commission at the current rates.',
         ],
       },
       {
@@ -142,7 +142,7 @@ const TERMS: Doc = {
       },
       {
         title: '6. Changes',
-        items: ['After a substantial change QB asks you to accept the new version on your next visit.'],
+        items: ['After a substantial change Easo asks you to accept the new version on your next visit.'],
       },
     ],
   },
@@ -164,7 +164,7 @@ const PRIVACY: Doc = {
         title: '2. Кто их видит',
         items: [
           'Продавец видит данные покупателя, необходимые для заказа; покупатель — реквизиты продавца.',
-          'Документы компании видят только её сотрудники и оператор QB.',
+          'Документы компании видят только её сотрудники и оператор Easo.',
           'Мы не продаём и не передаём данные третьим лицам, кроме случаев, предусмотренных законом РА.',
         ],
       },
@@ -241,7 +241,7 @@ export function Legal() {
     <div className="legal page">
       <nav className="legal-nav">
         <Link to="/" className="brand">
-          QB
+          Easo
         </Link>
         <Link to="/legal/terms" className={doc === 'terms' ? 'on' : ''}>
           {t('legal_terms')}

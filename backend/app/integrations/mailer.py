@@ -7,7 +7,7 @@ import httpx
 
 from app.config import get_settings
 
-log = logging.getLogger("qb.mail")
+log = logging.getLogger("easo.mail")
 
 
 class Mailer(Protocol):

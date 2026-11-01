@@ -1,6 +1,6 @@
 import { fill, useT } from '../i18n'
 
-const KEY = 'qb.haggle.howto.seen'
+const KEY = 'easo.haggle.howto.seen'
 
 export function howToSeen(): boolean {
   try {

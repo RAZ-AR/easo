@@ -1,4 +1,4 @@
-"""Sign-in: e-mail codes, Google and Telegram identities -> one QB user.
+"""Sign-in: e-mail codes, Google and Telegram identities -> one Easo user.
 
 A Google account whose verified e-mail matches an existing user signs into that user; Telegram has no e-mail,
 so it creates its own user unless linked from the profile (not built yet).
@@ -21,14 +21,14 @@ from app.platform.errors import TooManyRequests, ValidationFailed
 MAX_ATTEMPTS = 5
 MAX_CODES_PER_HOUR = 5
 
-SUBJECT = {"hy": "QB մուտքի կոդ", "ru": "Код входа в QB", "en": "Your QB sign-in code"}
+SUBJECT = {"hy": "Easo մուտքի կոդ", "ru": "Код входа в Easo", "en": "Your Easo sign-in code"}
 BODY = {
-    "hy": "Ձեր QB մուտքի կոդը՝ {code}\nԳործում է {ttl} րոպե։ Եթե դուք չեք խնդրել, անտեսեք այս նամակը։",
+    "hy": "Ձեր Easo մուտքի կոդը՝ {code}\nԳործում է {ttl} րոպե։ Եթե դուք չեք խնդրել, անտեսեք այս նամակը։",
     "ru": (
-        "Ваш код входа в QB: {code}\n"
+        "Ваш код входа в Easo: {code}\n"
         "Действует {ttl} минут. Если вы не запрашивали код, просто проигнорируйте письмо."
     ),
-    "en": "Your QB sign-in code: {code}\nValid for {ttl} minutes. If you did not ask for it, ignore it.",
+    "en": "Your Easo sign-in code: {code}\nValid for {ttl} minutes. If you did not ask for it, ignore it.",
 }
 
 
@@ -106,7 +106,10 @@ async def login_or_register(session: AsyncSession, ident: ExternalIdentity) -> U
         user = await session.scalar(select(User).where(User.telegram_id == int(ident.external_id)))
     if user is None:
         name = (
-            ident.display_name or (ident.email.split("@")[0] if ident.email else "") or ident.username or "QB"
+            ident.display_name
+            or (ident.email.split("@")[0] if ident.email else "")
+            or ident.username
+            or "Easo"
         )
         user = User(
             name=name,

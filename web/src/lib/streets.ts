@@ -6,7 +6,7 @@ export interface Street {
   hy: string
   ru?: string
   en?: string
-  d: string[] // QB districts the street runs through
+  d: string[] // Easo districts the street runs through
 }
 
 let cache: Promise<Street[]> | null = null

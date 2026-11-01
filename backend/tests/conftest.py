@@ -3,9 +3,18 @@ import os
 os.environ["ENV"] = "test"
 os.environ["JWT_SECRET"] = "test-secret-0123456789abcdef0123456789"
 os.environ["DEV_LOGIN"] = "true"
-os.environ["DATABASE_URL"] = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql+asyncpg://qb:qb@localhost:5435/qb_test"
-)
+
+
+def _test_database_url() -> str:
+    """TEST_DATABASE_URL, else the app's own DATABASE_URL pointed at easo_test (same role and password)."""
+    if url := os.environ.get("TEST_DATABASE_URL"):
+        return url
+    if url := os.environ.get("DATABASE_URL"):
+        return url.rsplit("/", 1)[0] + "/easo_test"
+    return "postgresql+asyncpg://easo:easo@localhost:5435/easo_test"
+
+
+os.environ["DATABASE_URL"] = _test_database_url()
 
 from collections.abc import AsyncIterator  # noqa: E402
 

@@ -16,7 +16,7 @@ import httpx
 
 from app.integrations.registry import CompanyInfo, RegistryUnavailable
 
-USER_AGENT = "QB-registry/1.0 (+https://qb.ayoo.space; company lookup at sign-up)"
+USER_AGENT = "Easo-registry/1.0 (+https://easo.ayoo.space; company lookup at sign-up)"
 
 # Labels of the free card, in Armenian (the page we read) and English (fallback if the language changes)
 _LABELS = {

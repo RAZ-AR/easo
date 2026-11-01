@@ -1,6 +1,6 @@
 """Background jobs (notifications, Excel import, PDFs) go through RQ.
 
-Run a worker: `rq worker --url $REDIS_URL qb` (the compose `worker` service does this).
+Run a worker: `rq worker --url $REDIS_URL easo` (the compose `worker` service does this).
 """
 
 from functools import lru_cache
@@ -10,7 +10,7 @@ from rq import Queue
 
 from app.config import get_settings
 
-QUEUE_NAME = "qb"
+QUEUE_NAME = "easo"
 
 
 @lru_cache
