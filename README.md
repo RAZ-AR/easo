@@ -35,6 +35,7 @@
 - Документы РА, регистрация по ИНН, верификация: [docs/04-documents-and-verification.md](docs/04-documents-and-verification.md)
 - Вход, гостевой режим, кабинеты, две роли: [docs/05-cabinets-and-auth.md](docs/05-cabinets-and-auth.md)
 - Роадмап до Нового года: [docs/07-roadmap.md](docs/07-roadmap.md)
+- Выход на рынок — пилот, цены, метрики: [docs/08-go-to-market.md](docs/08-go-to-market.md)
 - Бесплатный хостинг на Oracle Cloud: [docs/06-deploy-oracle.md](docs/06-deploy-oracle.md)
 - Как запускать и устроен код: [CLAUDE.md](CLAUDE.md)
 
