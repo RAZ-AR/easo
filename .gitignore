@@ -13,3 +13,5 @@ dev-dist/
 *.egg-info/
 *.tsbuildinfo
 .claude/launch.json
+test-results/
+playwright-report/

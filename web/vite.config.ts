@@ -16,8 +16,8 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'QB — HoReCa գնումներ',
-        short_name: 'QB',
+        name: 'Easo — HoReCa գնումներ',
+        short_name: 'Easo',
         description: 'Закупки для кафе и ресторанов: все поставщики в одной корзине, можно торговаться.',
         lang: 'hy',
         start_url: '/',
@@ -44,5 +44,6 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'], // e2e/ belongs to Playwright
   },
 })
