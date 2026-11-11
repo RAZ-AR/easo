@@ -2,6 +2,8 @@ import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { ConsentGate } from './components/Consent'
+import { ActiveOrders } from './components/OrderTracker'
+import { Sheet } from './components/Sheet'
 import { Icon } from './components/ui'
 import { LangContext, useT, type TextKey } from './i18n'
 import type { Lang, Mode } from './lib/api'
@@ -78,7 +80,7 @@ interface NavItem {
   label: TextKey
   icon: () => React.ReactNode
   badge?: number
-  desktopOnly?: boolean // kept off the phone tab bar (five round buttons at most)
+  inMore?: boolean // on the phone it sits in the dock's "More" sheet (the dock holds five slots at most)
 }
 
 function useAppState(): State {
@@ -105,6 +107,12 @@ function Layout({ state }: { state: State }) {
   const { pathname } = useLocation()
   const { count } = useCart()
   const nav = navFor(state, count)
+  // The tab title names the page, so history and open tabs can be told apart
+  const here = nav.find((n) => (n.to === '/' ? pathname === '/' : pathname === n.to || pathname.startsWith(n.to + '/')))
+  const pageTitle = here ? t(here.label) : null
+  useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} — Easo` : 'Easo'
+  }, [pageTitle])
   const showCartBar = (state === 'buyer' || state === 'guest' || state === 'no_company') && pathname === '/' && count > 0
 
   return (
@@ -114,16 +122,11 @@ function Layout({ state }: { state: State }) {
         <MobileTopBar state={state} />
         <main>
           <Banner state={state} />
+          {state === 'buyer' && <ActiveOrders />}
           <Routes>{routesFor(state)}</Routes>
         </main>
       </div>
-      <nav className="tabbar" aria-label="menu">
-        {nav
-          .filter((n) => !n.desktopOnly)
-          .map((n) => (
-            <Tab key={n.to} {...n} label={t(n.label)} />
-          ))}
-      </nav>
+      <Dock nav={nav} state={state} />
       {showCartBar && <CartBar />}
       <ConsentGate />
     </div>
@@ -151,7 +154,7 @@ function navFor(state: State, cartCount: number): NavItem[] {
         { to: '/', label: 'tab_catalog', icon: Icon.catalog },
         { to: '/cart', label: 'tab_cart', icon: Icon.cart, badge: cartCount },
         { to: '/orders', label: 'tab_orders', icon: Icon.ticket },
-        { to: '/documents', label: 'tab_documents', icon: Icon.doc, desktopOnly: true },
+        { to: '/documents', label: 'tab_documents', icon: Icon.doc, inMore: true },
         { to: '/company', label: 'tab_company', icon: Icon.company },
       ]
     case 'seller':
@@ -160,9 +163,9 @@ function navFor(state: State, cartCount: number): NavItem[] {
         { to: '/orders', label: 'tab_orders', icon: Icon.ticket },
         { to: '/seller/products', label: 'tab_products', icon: Icon.catalog },
         { to: '/seller/settings', label: 'tab_delivery', icon: Icon.truck },
-        { to: '/seller/clients', label: 'tab_clients', icon: Icon.people, desktopOnly: true },
-        { to: '/documents', label: 'tab_documents', icon: Icon.doc, desktopOnly: true },
-        { to: '/company', label: 'tab_company', icon: Icon.company },
+        { to: '/seller/clients', label: 'tab_clients', icon: Icon.people, inMore: true },
+        { to: '/documents', label: 'tab_documents', icon: Icon.doc, inMore: true },
+        { to: '/company', label: 'tab_company', icon: Icon.company, inMore: true },
       ]
   }
 }
@@ -375,9 +378,7 @@ function Sidebar({ nav, state }: { nav: NavItem[]; state: State }) {
 }
 
 function MobileTopBar({ state }: { state: State }) {
-  const t = useT()
-  const navigate = useNavigate()
-  const { me, org, signOut } = useSession()
+  const { org } = useSession()
   const dual = !!org && org.is_buyer && org.is_seller
   return (
     <header className="topbar">
@@ -386,25 +387,7 @@ function MobileTopBar({ state }: { state: State }) {
       </Link>
       {dual ? <ModeSwitch compact /> : state === 'guest' ? <span className="who" /> : <Who />}
       <span className="spacer" />
-      {state !== 'guest' && state !== 'admin' && <Bell />}
-      <LangCycle />
-      {me ? (
-        <button
-          className="ibtn"
-          aria-label={t('logout')}
-          title={t('logout')}
-          onClick={() => {
-            signOut()
-            navigate('/')
-          }}
-        >
-          {Icon.logout()}
-        </button>
-      ) : (
-        <Link className="btn primary small-btn" to="/login">
-          {t('sign_in')}
-        </Link>
-      )}
+      {state !== 'guest' && state !== 'admin' ? <Bell /> : <LangCycle />}
     </header>
   )
 }
@@ -443,7 +426,7 @@ function CartBar() {
   const { cart, count, guest } = useCart()
   const { me } = useSession()
   return (
-    <Link to="/cart" className="cartbar">
+    <Link to="/cart" className="cartbar" aria-label={`${t('tab_cart')}: ${count} ${t('items')}`}>
       <div className="info">
         {cart ? (
           <span key={cart.total_amd} className="sum num bump">
@@ -468,10 +451,87 @@ function Tab({ to, icon, label, badge }: { to: string; icon: () => React.ReactNo
     <NavLink to={to} end={to === '/'} aria-label={label} title={label}>
       <span className="tab-icon">
         {icon()}
-        {badge ? <span className="dot">{badge}</span> : null}
+        {badge ? <span className="dot">{badge > 99 ? '99+' : badge}</span> : null}
       </span>
       <span className="tab-label">{label}</span>
     </NavLink>
+  )
+}
+
+/** Phone dock: the main sections, plus "More" for the rest of the sidebar (extra pages, language, account). */
+function Dock({ nav, state }: { nav: NavItem[]; state: State }) {
+  const t = useT()
+  const { pathname } = useLocation()
+  const [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
+  useEffect(close, [pathname, close])
+  const main = nav.filter((n) => !n.inMore)
+  const extra = nav.filter((n) => n.inMore)
+  const extraActive = extra.some((n) => pathname === n.to || pathname.startsWith(n.to + '/'))
+  return (
+    <>
+      <nav className="tabbar dock" aria-label="menu" style={{ '--slots': main.length + 1 } as React.CSSProperties}>
+        {main.map((n) => (
+          <Tab key={n.to} {...n} label={t(n.label)} />
+        ))}
+        <button
+          type="button"
+          className={open || extraActive ? 'active' : ''}
+          aria-label={t('tab_more')}
+          aria-expanded={open}
+          title={t('tab_more')}
+          onClick={() => setOpen(true)}
+        >
+          <span className="tab-icon">{Icon.more()}</span>
+          <span className="tab-label">{t('tab_more')}</span>
+        </button>
+      </nav>
+      {open && <MoreSheet extra={extra} state={state} onClose={close} />}
+    </>
+  )
+}
+
+function MoreSheet({ extra, state, onClose }: { extra: NavItem[]; state: State; onClose: () => void }) {
+  const t = useT()
+  const { me } = useSession()
+  return (
+    <Sheet onClose={onClose}>
+      <div className="more-head">
+        <Who />
+        <button type="button" className="ibtn" aria-label={t('close')} onClick={onClose}>
+          ×
+        </button>
+      </div>
+      <ModeSwitch />
+      {(extra.length > 0 || (me && state !== 'admin')) && (
+        <nav className="more-nav">
+          {extra.map((n) => (
+            <NavLink key={n.to} to={n.to} end={n.to === '/'}>
+              {n.icon()}
+              <span>{t(n.label)}</span>
+              {n.badge ? <span className="dot">{n.badge}</span> : null}
+            </NavLink>
+          ))}
+          {me && state !== 'admin' && (
+            <NavLink to="/notifications">
+              {Icon.bell()}
+              <span>{t('tab_notifications')}</span>
+            </NavLink>
+          )}
+        </nav>
+      )}
+      <div className="more-row">
+        <span className="muted small">{t('menu_language')}</span>
+        <LangSwitch />
+      </div>
+      {state === 'guest' && <p className="muted small">{t('guest_hint')}</p>}
+      <div className="more-row">
+        <p className="legal-links small">
+          <Link to="/legal/terms">{t('legal_terms')}</Link> · <Link to="/legal/privacy">{t('legal_privacy')}</Link>
+        </p>
+        <SignOutButton />
+      </div>
+    </Sheet>
   )
 }
 

@@ -8,11 +8,23 @@ import { OrderMeter } from '../components/ui'
 import { fill, problemText, SOURCES, useLang, useT } from '../i18n'
 import { api, ApiError, type Address, type CartGroup, type CartLine, type Product, type Suggestion } from '../lib/api'
 import { useCart } from '../lib/cart'
-import { amd, date, tr, unit } from '../lib/format'
+import { amd, date, slot, tr, unit } from '../lib/format'
 import { pct, priceForDiscount } from '../lib/haggle'
 import { useSession } from '../lib/session'
 
 const DISCOUNTS = [3, 5, 7, 10]
+
+/** The buyer's delivery pick for one seller: a slot start ("10:00:00") or any time, regular or urgent. */
+interface Pick {
+  slot: string | null
+  express: boolean
+}
+const NO_PICK: Pick = { slot: null, express: false }
+
+/** Urgent-delivery surcharge the buyer picked for this seller (the cart API counts regular delivery only). */
+function expressFee(g: CartGroup, p: Pick | undefined): number {
+  return p?.express && g.express && !g.express.problem ? g.express.fee_amd : 0
+}
 
 /** What the buyer saves if every offer in the cart is accepted. */
 function potentialSaving(groups: CartGroup[], discounts: Record<string, number>): number {
@@ -127,8 +139,10 @@ function ServerCart() {
   const navigate = useNavigate()
   const { cart, refresh } = useCart()
   const [addresses, setAddresses] = useState<Address[]>([])
+  const [addrReady, setAddrReady] = useState(false)
   const [addressId, setAddressId] = useState<string | undefined>()
   const [discounts, setDiscounts] = useState<Record<string, number>>({})
+  const [picks, setPicks] = useState<Record<string, Pick>>({})
   const [sending, setSending] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -140,6 +154,7 @@ function ServerCart() {
     api.addresses().then((list) => {
       setAddresses(list)
       setAddressId((id) => id ?? list[0]?.id)
+      setAddrReady(true)
     })
   }, [refresh])
 
@@ -169,6 +184,19 @@ function ServerCart() {
       .map((g) => [g.seller.id, discounts[g.seller.id] ?? 0]),
   )
   const saving = potentialSaving(cart.groups, effective)
+  const total = cart.total_amd + cart.groups.reduce((sum, g) => sum + expressFee(g, picks[g.seller.id]), 0)
+
+  // Why the button is off, said next to it: the reasons themselves sit screens above, in each supplier's card
+  const blockers: { key: string; text: string; href?: string }[] = cart.problems.map((p, i) => {
+    const g = cart.groups.find((x) => x.seller.id === p.seller_id || x.lines.some((l) => l.product_id === p.product_id))
+    const name = g?.seller.display_name ?? ''
+    const text =
+      p.code === 'min_order_not_reached' && g
+        ? fill(t('cart_blocked_min'), { name, sum: amd(g.missing_amd) })
+        : [name, problemText(p.code, lang)].filter(Boolean).join(': ')
+    return { key: `${p.code}-${i}`, text, href: g ? `#seller-${g.seller.id}` : undefined }
+  })
+  if (addrReady && addresses.length === 0) blockers.push({ key: 'address', text: t('add_delivery_address') })
 
   async function send() {
     setSending(true)
@@ -177,7 +205,12 @@ function ServerCart() {
       const order_offers = Object.entries(effective)
         .filter(([, v]) => v > 0)
         .map(([seller_id, v]) => ({ seller_id, percent_bp: Math.round(v * 100) }))
-      const { orders } = await api.checkout({ address_id: addressId, order_offers }, attempt.current)
+      const deliveries = cart!.groups.map((g) => {
+        const p = picks[g.seller.id] ?? NO_PICK
+        const express = expressFee(g, p) > 0
+        return { seller_id: g.seller.id, slot_start: express ? null : p.slot, express }
+      })
+      const { orders } = await api.checkout({ address_id: addressId, order_offers, deliveries }, attempt.current)
       attempt.current = crypto.randomUUID()
       navigator.vibrate?.([10, 40, 10])
       await refresh()
@@ -195,20 +228,8 @@ function ServerCart() {
   return (
     <div className="stack page">
       <h1 className="page-title">{t('tab_cart')}</h1>
-      {cart.groups.map((g) => (
-        <SellerTicket
-          key={g.seller.id}
-          g={g}
-          canNegotiate={cart.can_negotiate}
-          rounds={cart.offer_max_rounds}
-          discount={discounts[g.seller.id] ?? 0}
-          onDiscount={(v) => setDiscounts((d) => ({ ...d, [g.seller.id]: v }))}
-          suggestions={suggestions.filter((x) => x.seller.id === g.seller.id)}
-        />
-      ))}
-      <CartSuggestions items={suggestions} />
-
-      <section className="ticket checkout">
+      {/* The address comes first: delivery days, fees and suggestions depend on it */}
+      <section className="ticket cart-address">
         {addresses.length > 0 && (
           <label className="field">
             <span>{t('address')}</span>
@@ -234,6 +255,23 @@ function ServerCart() {
             + {t('add_delivery_address')}
           </Link>
         )}
+      </section>
+      {cart.groups.map((g) => (
+        <SellerTicket
+          key={g.seller.id}
+          g={g}
+          canNegotiate={cart.can_negotiate}
+          rounds={cart.offer_max_rounds}
+          discount={discounts[g.seller.id] ?? 0}
+          onDiscount={(v) => setDiscounts((d) => ({ ...d, [g.seller.id]: v }))}
+          pick={picks[g.seller.id] ?? NO_PICK}
+          onPick={(p) => setPicks((x) => ({ ...x, [g.seller.id]: p }))}
+          suggestions={suggestions.filter((x) => x.seller.id === g.seller.id)}
+        />
+      ))}
+      <CartSuggestions items={suggestions} />
+
+      <section className="ticket checkout">
         <div className="total-row">
           <span>
             {t('total')}
@@ -242,7 +280,7 @@ function ServerCart() {
               · {cart.groups.length} {t('suppliers')}
             </span>
           </span>
-          <strong className="num">{amd(cart.total_amd)}</strong>
+          <strong className="num">{amd(total)}</strong>
         </div>
         {saving > 0 && (
           <div className="total-row small">
@@ -255,8 +293,18 @@ function ServerCart() {
             {e}
           </p>
         ))}
-        <button className="btn primary block" disabled={sending || cart.problems.length > 0 || addresses.length === 0} onClick={send}>
-          {t('send_all')} <span className="sub num">· {amd(cart.total_amd)}</span>
+        {blockers.length > 0 && (
+          <div className="blockers" role="status">
+            <b>{t('cart_blocked')}</b>
+            <ul>
+              {blockers.map((b) => (
+                <li key={b.key}>{b.href ? <a href={b.href}>{b.text}</a> : b.text}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <button className="btn primary block" disabled={sending || !addrReady || blockers.length > 0} onClick={send}>
+          {t('send_all')} <span className="sub num">· {amd(total)}</span>
         </button>
       </section>
     </div>
@@ -270,7 +318,11 @@ function SellerTicket({
   discount,
   onDiscount,
   suggestions,
+  pick,
+  onPick,
 }: {
+  pick: Pick
+  onPick: (p: Pick) => void
   g: CartGroup
   canNegotiate: boolean
   rounds: number
@@ -281,13 +333,30 @@ function SellerTicket({
   const t = useT()
   const lang = useLang()
   const hasLineOffers = g.lines.some((l) => l.offer_price_amd !== null)
+  const urgent = expressFee(g, pick)
   return (
-    <section className="ticket perf">
+    <section className="ticket perf" id={`seller-${g.seller.id}`}>
       <header className="ticket-head">
         <h2>{g.seller.display_name}</h2>
-        {g.delivery_date && <span className="pill plain">🚚 {date(g.delivery_date, lang)}</span>}
+        {urgent > 0 ? (
+          <span className="pill express">⚡ {fill(t('express_in'), { h: g.express!.hours })}</span>
+        ) : (
+          g.delivery_date && (
+            <span className="pill plain">
+              🚚 {date(g.delivery_date, lang)}
+              {pick.slot && `, ${slot(pick.slot, g.slots.find((x) => x.start === pick.slot)?.end ?? pick.slot)}`}
+            </span>
+          )
+        )}
       </header>
       <OrderMeter subtotal={g.subtotal_amd} min={g.min_order_amd} freeFrom={g.free_delivery_from_amd} />
+      {g.missing_amd > 0 && (
+        <p className={g.small_order_fee_amd !== null ? 'min-note' : 'min-note stop'}>
+          {g.small_order_fee_amd !== null
+            ? fill(t('below_min_or_pay'), { fee: amd(g.small_order_fee_amd) })
+            : t('below_min_must')}
+        </p>
+      )}
       <ul className="lines">
         {g.lines.map((l) => (
           <Line
@@ -307,7 +376,14 @@ function SellerTicket({
         <dd>{amd(g.subtotal_amd)}</dd>
         <dt>{t('delivery')}</dt>
         <dd>{g.delivery_fee_amd ? amd(g.delivery_fee_amd) : t('free')}</dd>
+        {urgent > 0 && (
+          <>
+            <dt>{t('express_fee_row')}</dt>
+            <dd>{amd(urgent)}</dd>
+          </>
+        )}
       </dl>
+      <DeliveryPick g={g} pick={pick} onPick={onPick} />
       {g.problems
         .filter((p) => p !== 'min_order_not_reached')
         .map((p) => (
@@ -328,6 +404,56 @@ function SellerTicket({
         </div>
       )}
     </section>
+  )
+}
+
+/** When to deliver: regular (any time or a seller's slot) or urgent today, if the seller offers it. */
+function DeliveryPick({ g, pick, onPick }: { g: CartGroup; pick: Pick; onPick: (p: Pick) => void }) {
+  const t = useT()
+  const lang = useLang()
+  const ex = g.express
+  if (!ex && g.slots.length === 0) return null
+  const urgent = pick.express && !!ex && !ex.problem
+  return (
+    <div className="delivery-pick">
+      <span className="eyebrow">{t('delivery_when')}</span>
+      {ex && (
+        <div className="mode-switch" role="group" aria-label={t('delivery_when')}>
+          <button type="button" className={urgent ? '' : 'on'} aria-pressed={!urgent} onClick={() => onPick({ ...pick, express: false })}>
+            {t('delivery_regular')}
+          </button>
+          <button
+            type="button"
+            className={urgent ? 'on' : ''}
+            aria-pressed={urgent}
+            disabled={!!ex.problem}
+            onClick={() => onPick({ ...pick, express: true })}
+          >
+            ⚡ {t('delivery_express')} <small className="num">+{amd(ex.fee_amd)}</small>
+          </button>
+        </div>
+      )}
+      {ex?.problem && <p className="muted small">⚡ {problemText(ex.problem, lang)}</p>}
+      {urgent && <p className="muted small">⚡ {fill(t('express_in'), { h: ex!.hours })}</p>}
+      {!urgent && g.slots.length > 0 && (
+        <div className="slot-chips" role="group" aria-label={t('slots_title')}>
+          <button type="button" className={pick.slot === null ? 'chip on' : 'chip'} onClick={() => onPick({ ...pick, slot: null })}>
+            {t('slot_any')}
+          </button>
+          {g.slots.map((x) => (
+            <button
+              type="button"
+              key={x.start}
+              className={pick.slot === x.start ? 'chip on num' : 'chip num'}
+              aria-pressed={pick.slot === x.start}
+              onClick={() => onPick({ ...pick, slot: x.start })}
+            >
+              {slot(x.start, x.end)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

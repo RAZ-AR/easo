@@ -14,7 +14,14 @@ test.describe('order lifecycle', () => {
 
   async function act(page: Page, label: string, status: string) {
     await page.getByRole('button', { name: label, exact: true }).click()
+    // Cancelling asks first, with an optional reason
+    const dialog = page.getByRole('dialog')
+    if (label === 'Cancel') {
+      await dialog.getByLabel('Reason (optional)').fill('ordered twice')
+      await dialog.getByRole('button', { name: label, exact: true }).click()
+    }
     await expect(page.locator('header .status')).toHaveText(status)
+    if (label === 'Cancel') await expect(page.getByText('Reason: ordered twice')).toBeVisible()
   }
 
   test('buyer orders from the catalog, seller confirms and delivers, buyer accepts', async ({ page, request, context }) => {

@@ -21,6 +21,8 @@ const VENUE_LABEL: Record<string, Record<'hy' | 'ru' | 'en', string>> = {
 }
 
 type Step = 'role' | 'tin' | 'form'
+/** Fields folded under "details for documents"; the fold opens when one of them has an error */
+const LATER = ['legal_address', 'email', 'bank_account', 'director_name', 'registration_number', 'tax_regime', 'bank_name']
 
 /** First run without a company: pick a role, find the company by TIN, confirm the requisites. */
 export function Onboarding() {
@@ -99,6 +101,9 @@ export function Onboarding() {
       <h1 className="tagline" style={{ marginTop: 8 }}>
         {t('onb_title')}
       </h1>
+      <p className="eyebrow" style={{ margin: 0 }}>
+        {fill(t('onb_step'), { n: step === 'role' ? 1 : step === 'tin' ? 2 : 3 })}
+      </p>
       {supplier && form.roles.includes('buyer') && (
         <p className="pill lamp self-start">{fill(t('sup_onb_note'), { name: supplier })}</p>
       )}
@@ -142,7 +147,6 @@ export function Onboarding() {
             hint={t('tin_hint')}
             inputMode="numeric"
             autoFocus
-            placeholder="02744119"
             value={form.tin}
             onChange={(e) => set({ tin: e.target.value })}
             onKeyDown={(e) => e.key === 'Enter' && find()}
@@ -181,22 +185,7 @@ export function Onboarding() {
           {lookup?.found && lookup.provider === 'eregister' && <p className="muted small">{t('fill_missing')}</p>}
           <Field label={t('legal_name')} required {...bind('legal_name')} />
           <Field label={t('display_name')} {...bind('display_name')} />
-          <SelectField
-            label={t('tax_regime')}
-            value={form.tax_regime ?? ''}
-            onChange={(e) => set({ tax_regime: (e.target.value || null) as TaxRegime | null })}
-            options={[
-              { value: '', label: '—' },
-              { value: 'vat', label: t('regime_vat') },
-              { value: 'turnover', label: t('regime_turnover') },
-              { value: 'micro', label: t('regime_micro') },
-            ]}
-          />
-          <AddressField label={t('legal_address')} value={form.legal_address ?? ''} onChange={(v) => set({ legal_address: v })} error={errors.legal_address} />
-          <Field label={t('director')} {...bind('director_name')} />
-          <Field label={t('reg_number')} {...bind('registration_number')} />
           <ContactField kind="phone" label={t('phone')} value={form.phone ?? ''} onChange={(v) => set({ phone: v })} error={errors.phone} />
-          <ContactField kind="email" label={t('email')} value={form.email ?? ''} onChange={(v) => set({ email: v })} error={errors.email} />
           {form.roles.includes('buyer') && (
             <>
               <SelectField
@@ -208,18 +197,42 @@ export function Onboarding() {
               <p className="muted small">{t('addresses_later')}</p>
             </>
           )}
-          {form.roles.includes('seller') && (
-            <>
-              <Field label={t('bank_name')} {...bind('bank_name')} />
-              <ContactField
-                kind="bank_account"
-                label={t('bank_account')}
-                value={form.bank_account ?? ''}
-                onChange={(v) => set({ bank_account: v })}
-                error={errors.bank_account}
+          {/* Not needed for the first order: asked again where they matter, on the company page */}
+          <details className="fold" open={Object.keys(errors).some((k) => LATER.includes(k))}>
+            <summary>
+              {t('onb_later_title')}
+              <span className="muted small">{t('onb_later_hint')}</span>
+            </summary>
+            <div className="fold-body">
+              <SelectField
+                label={t('tax_regime')}
+                value={form.tax_regime ?? ''}
+                onChange={(e) => set({ tax_regime: (e.target.value || null) as TaxRegime | null })}
+                options={[
+                  { value: '', label: '—' },
+                  { value: 'vat', label: t('regime_vat') },
+                  { value: 'turnover', label: t('regime_turnover') },
+                  { value: 'micro', label: t('regime_micro') },
+                ]}
               />
-            </>
-          )}
+              <AddressField label={t('legal_address')} value={form.legal_address ?? ''} onChange={(v) => set({ legal_address: v })} error={errors.legal_address} />
+              <Field label={t('director')} {...bind('director_name')} />
+              <Field label={t('reg_number')} {...bind('registration_number')} />
+              <ContactField kind="email" label={t('email')} value={form.email ?? ''} onChange={(v) => set({ email: v })} error={errors.email} />
+              {form.roles.includes('seller') && (
+                <>
+                  <Field label={t('bank_name')} {...bind('bank_name')} />
+                  <ContactField
+                    kind="bank_account"
+                    label={t('bank_account')}
+                    value={form.bank_account ?? ''}
+                    onChange={(v) => set({ bank_account: v })}
+                    error={errors.bank_account}
+                  />
+                </>
+              )}
+            </div>
+          </details>
           <label className="check consent">
             <input type="checkbox" checked={!!form.accept_terms} onChange={(e) => set({ accept_terms: e.target.checked })} />
             <span>

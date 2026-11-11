@@ -50,6 +50,11 @@ export function date(iso: string, lang: Lang): string {
   })
 }
 
+/** "10:00:00", "11:00:00" -> "10:00–11:00" */
+export function slot(from: string, to: string): string {
+  return `${from.slice(0, 5)}–${to.slice(0, 5)}`
+}
+
 /** Timestamp in Yerevan time: "23 Oct, 14:05". */
 export function dateTime(iso: string, lang: Lang): string {
   return new Date(iso).toLocaleString(LOCALES[lang], {

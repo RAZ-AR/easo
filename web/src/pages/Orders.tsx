@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Countdown } from '../components/ui'
 import { STATUSES, STEPS, useLang, useT, type TextKey } from '../i18n'
 import { api, type NextStep, type OrderListItem } from '../lib/api'
-import { amd, date, tr } from '../lib/format'
+import { amd, date, slot, tr } from '../lib/format'
 
 // Until a notification channel is chosen, lists refresh themselves
 const POLL_MS = 15_000
@@ -99,7 +99,12 @@ function OrderCard({ o }: { o: OrderListItem }) {
         <div className="bottom">
           <span className="meta" style={{ margin: 0 }}>
             <span className={`status s-${o.status}`}>{STATUSES[o.status][lang]}</span>
-            {o.delivery_date && <span className="pill plain">🚚 {date(o.delivery_date, lang)}</span>}
+            {o.delivery_date && (
+            <span className={o.express ? 'pill express' : 'pill plain'}>
+              {o.express ? `⚡ ${t('express_badge')}` : '🚚'} {date(o.delivery_date, lang)}
+              {o.slot_from && o.slot_to && `, ${slot(o.slot_from, o.slot_to)}`}
+            </span>
+          )}
             {o.saving_amd > 0 && <span className="pill saving num">−{amd(o.saving_amd)}</span>}
             {o.payment_status === 'paid' && <span className="pill saving">✓ {t('paid')}</span>}
           </span>

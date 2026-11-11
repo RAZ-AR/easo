@@ -5,13 +5,16 @@ import { OrderChat } from '../components/Chat'
 import { ClientCard } from '../components/ClientCard'
 import { OrderDocuments } from '../components/OrderDocuments'
 import { PriceDial } from '../components/PriceDial'
+import { Sheet } from '../components/Sheet'
+import { LIVE, OrderTracker } from '../components/OrderTracker'
 import { StageRail } from '../components/StageRail'
 import { Countdown } from '../components/ui'
-import { ACTIONS, problemText, SOURCES, STATUSES, STEPS, TEXTS, useLang, useT } from '../i18n'
+import { ACTIONS, problemText, SOURCES, STATUSES, STEPS, TEXTS, useLang, useT, type TextKey } from '../i18n'
 import { api, ApiError, type Decision, type LineAnswer, type Offer, type Order, type OrderLine } from '../lib/api'
 import { useCartMaybe } from '../lib/cart'
-import { amd, date, dateTime, qty, tr, unit } from '../lib/format'
+import { amd, date, dateTime, qty, slot, tr, unit } from '../lib/format'
 import { midpoint, pct } from '../lib/haggle'
+import { useToast } from '../lib/toast'
 
 const POLL_MS = 10_000
 // Which button carries the next step (drawn as the primary one)
@@ -21,6 +24,9 @@ const STEP_ACTION: Record<string, string> = {
   accept_delivery: 'accept',
   mark_paid: 'mark_paid',
 }
+
+/** Reasons set by the system; anything else is the text the other side typed */
+const SYSTEM_REASONS = ['offer_expired', 'buyer', 'seller_rejected']
 
 export function OrderDetail() {
   const { id = '' } = useParams()
@@ -33,6 +39,10 @@ export function OrderDetail() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [confirmQty, setConfirmQty] = useState<Record<string, string>>({})
+  // Cancelling and rejecting cannot be undone: ask first, with an optional reason for the other side
+  const [asking, setAsking] = useState<'cancel' | 'reject' | null>(null)
+  const [reason, setReason] = useState('')
+  const toast = useToast()
 
   const load = useCallback(() => api.order(id).then(setOrder, (e: Error) => setError(e.message)), [id])
 
@@ -64,19 +74,30 @@ export function OrderDetail() {
   const nego = order.negotiation
   const primary = order.next_step ? STEP_ACTION[order.next_step] : undefined
 
-  function doAction(action: string) {
+  function doAction(action: string, confirmed = false) {
     if (!order) return
+    const done = (o: Order) => {
+      setOrder(o)
+      toast(t(`done_${action}` as TextKey))
+    }
     if (action === 'confirm') {
       const lines = Object.entries(confirmQty).map(([order_line_id, q]) => ({ order_line_id, qty: q || '0' }))
-      return run(api.confirm(order.id, lines), setOrder)
+      return run(api.confirm(order.id, lines), done)
     }
-    if (action === 'accept') return run(api.accept(order.id), setOrder)
+    if (action === 'accept') return run(api.accept(order.id), done)
     if (action === 'reorder')
       return run(api.reorder(order.id), async () => {
         await cart?.refresh()
+        toast(t('done_reorder'))
         navigate('/cart')
       })
-    return run(api.action(order.id, action as 'cancel' | 'reject' | 'ship' | 'deliver' | 'mark_paid'), setOrder)
+    if ((action === 'cancel' || action === 'reject') && !confirmed) {
+      setReason('')
+      return setAsking(action)
+    }
+    setAsking(null)
+    const a = action as 'cancel' | 'reject' | 'ship' | 'deliver' | 'mark_paid'
+    return run(api.action(order.id, a, reason.trim() || undefined), done)
   }
 
   const actions = order.allowed_actions
@@ -88,6 +109,21 @@ export function OrderDetail() {
       <Link to={isSeller ? '/' : '/orders'} className="link">
         ← {t('back')}
       </Link>
+      {!isSeller && LIVE.includes(order.status) && (
+        <OrderTracker
+          link={false}
+          o={{
+            id: order.id,
+            status: order.status,
+            seller: order.seller.display_name,
+            delivery_date: order.delivery_date,
+            slot_from: order.slot_from,
+            slot_to: order.slot_to,
+            express: order.express,
+            negotiated: !!order.negotiation,
+          }}
+        />
+      )}
 
       <section className="ticket perf">
         <header className="ticket-head">
@@ -100,7 +136,12 @@ export function OrderDetail() {
           <span className={`status s-${order.status}`}>{STATUSES[order.status][lang]}</span>
         </header>
         <div className="meta" style={{ marginTop: 10 }}>
-          {order.delivery_date && <span className="pill plain">🚚 {date(order.delivery_date, lang)}</span>}
+          {order.delivery_date && (
+            <span className={order.express ? 'pill express' : 'pill plain'}>
+              {order.express ? `⚡ ${t('express_badge')}` : '🚚'} {date(order.delivery_date, lang)}
+              {order.slot_from && order.slot_to && `, ${slot(order.slot_from, order.slot_to)}`}
+            </span>
+          )}
           {order.address && <span className="pill plain">📍 {order.address.text}</span>}
           {order.address && (order.address.contact_name || order.address.contact_phone) && (
             <span className="pill plain">
@@ -112,7 +153,7 @@ export function OrderDetail() {
             {order.payment_status === 'paid' ? `✓ ${t('paid')}` : t('unpaid')}
           </span>
         </div>
-        <StageRail order={order} />
+        {(isSeller || !LIVE.includes(order.status)) && <StageRail order={order} />}
       </section>
 
       {order.next_step && (
@@ -137,6 +178,11 @@ export function OrderDetail() {
         </div>
       )}
       {order.cancel_reason === 'offer_expired' && <p className="warn">{TEXTS.cancel_reason_offer_expired[lang]}</p>}
+      {order.cancel_reason && !SYSTEM_REASONS.includes(order.cancel_reason) && (
+        <p className="warn">
+          {t('reason')}: {order.cancel_reason}
+        </p>
+      )}
       {notice && <p className="notice">{notice}</p>}
 
       {nego && (
@@ -207,7 +253,34 @@ export function OrderDetail() {
 
       <OrderDocuments order={order} />
 
-      {error && <p className="error">{error}</p>}
+      {asking && (
+        <Sheet onClose={() => setAsking(null)}>
+          <form
+            className="sheet-form"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void doAction(asking, true)
+            }}
+          >
+            <h2 style={{ margin: 0 }}>{t(asking === 'cancel' ? 'confirm_cancel_title' : 'confirm_reject_title')}</h2>
+            <p className="muted" style={{ margin: 0 }}>
+              {order.number} · {other.display_name} · {amd(order.total_amd)}
+            </p>
+            <p style={{ margin: 0 }}>{t('confirm_text')}</p>
+            <label className="field">
+              <span>{t('reason_optional')}</span>
+              <input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} />
+            </label>
+            <div className="actions">
+              <button type="button" className="btn" onClick={() => setAsking(null)}>
+                {t('keep_order')}
+              </button>
+              <button className="btn danger">{ACTIONS[asking][lang]}</button>
+            </div>
+          </form>
+        </Sheet>
+      )}
+      {error && <p className="error" role="alert">{error}</p>}
       {actions.length > 0 && (
         <div className="actions">
           {actions.map((a) => (

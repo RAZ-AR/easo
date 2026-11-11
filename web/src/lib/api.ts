@@ -82,6 +82,9 @@ export interface CartGroup {
   seller: Brief; lines: CartLine[]; subtotal_amd: number; delivery_fee_amd: number; total_amd: number
   min_order_amd: number; missing_amd: number; free_delivery_from_amd: number | null
   delivery_date: string | null; problems: string[]; offer_response_hours: number
+  small_order_fee_amd: number | null
+  slots: { start: string; end: string }[]
+  express: { fee_amd: number; hours: number; until: string; min_amd: number; problem: string | null } | null
 }
 export interface Cart {
   groups: CartGroup[]; total_amd: number; address: Address | null
@@ -108,6 +111,7 @@ export interface Negotiation {
 export interface Order {
   id: string; number: string; status: OrderStatus; my_side: 'buyer' | 'seller'; buyer: Brief; seller: Brief
   delivery_date: string | null; subtotal_amd: number; discount_amd: number; delivery_fee_amd: number
+  slot_from: string | null; slot_to: string | null; express: boolean
   total_amd: number; payment_status: 'unpaid' | 'paid'; cancel_reason: string | null
   buyer_note: string | null; seller_note: string | null; created_at: string
   lines: OrderLine[]; negotiation: Negotiation | null; allowed_actions: string[]; address: Address | null
@@ -124,7 +128,8 @@ export interface ClientProfile {
 }
 export interface OrderListItem {
   id: string; number: string; status: OrderStatus; counterparty: Brief; total_amd: number
-  delivery_date: string | null; created_at: string; lines_count: number; payment_status: 'unpaid' | 'paid'
+  delivery_date: string | null; slot_from: string | null; slot_to: string | null; express: boolean
+  created_at: string; lines_count: number; payment_status: 'unpaid' | 'paid'
   my_side: 'buyer' | 'seller'; next_step: NextStep | null; deadline: string | null; saving_amd: number
   preview: I18nText[]
 }
@@ -216,6 +221,8 @@ export interface ImportResult { counts: Record<ImportAction, number>; items: Imp
 export interface SellerSettings {
   min_order_amd: number; cutoff_time: string; lead_days: number; delivery_fee_amd: number
   free_delivery_from_amd: number | null; offer_response_hours: number
+  small_order_fee_amd: number | null; window_from: string; window_to: string; slot_hours: number
+  express_fee_amd: number | null; express_until: string; express_hours: number; express_min_amd: number
   zones: { district: string; weekdays: number[] }[]
   description: I18nText | null
 }
@@ -393,7 +400,14 @@ export const api = {
       body: JSON.stringify({ qty, offer_price_amd: offerPrice }),
     }),
   removeCartItem: (productId: string) => request<Cart>(`/cart/items/${productId}`, { method: 'DELETE' }),
-  checkout: (body: { address_id?: string; order_offers?: { seller_id: string; percent_bp: number }[] }, key: string) =>
+  checkout: (
+    body: {
+      address_id?: string
+      order_offers?: { seller_id: string; percent_bp: number }[]
+      deliveries?: { seller_id: string; slot_start: string | null; express: boolean }[]
+    },
+    key: string,
+  ) =>
     post<{ orders: Order[] }>('/checkout', body, { 'Idempotency-Key': key }),
 
   orders: (status?: OrderStatus[]) => {
@@ -405,8 +419,8 @@ export const api = {
   confirm: (id: string, lines: { order_line_id: string; qty: string }[]) =>
     post<Order>(`/orders/${id}/confirm`, { lines }),
   accept: (id: string) => post<Order>(`/orders/${id}/accept`, {}),
-  action: (id: string, action: 'cancel' | 'reject' | 'ship' | 'deliver' | 'mark_paid') =>
-    post<Order>(`/orders/${id}/${action}`),
+  action: (id: string, action: 'cancel' | 'reject' | 'ship' | 'deliver' | 'mark_paid', reason?: string) =>
+    post<Order>(`/orders/${id}/${action}`, reason ? { reason } : undefined),
   respond: (id: string, body: { lines?: LineAnswer[]; order?: { decision: Decision; percent_bp?: number } }) =>
     post<Order>(`/orders/${id}/negotiation/respond`, body, { 'Idempotency-Key': crypto.randomUUID() }),
   reorder: (id: string) => post<{ added: number }>(`/orders/${id}/reorder`),

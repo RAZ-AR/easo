@@ -71,6 +71,34 @@ export const Icon = {
       <path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.5 14.8c1.7.6 2.9 2.2 3.5 4.7" />
     </svg>
   ),
+  // tick in a circle: the seller confirmed
+  check: () => (
+    <svg viewBox="0 0 24 24" {...stroke}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.2 12.3l2.6 2.6 5-5.4" />
+    </svg>
+  ),
+  // two arrows: price offer
+  haggle: () => (
+    <svg viewBox="0 0 24 24" {...stroke}>
+      <path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5" />
+    </svg>
+  ),
+  // a box at the door: delivered
+  box: () => (
+    <svg viewBox="0 0 24 24" {...stroke}>
+      <path d="M4 8l8-4 8 4v8l-8 4-8-4z" />
+      <path d="M4 8l8 4 8-4M12 12v8" />
+    </svg>
+  ),
+  // three dots: the phone dock's "more" sheet
+  more: () => (
+    <svg viewBox="0 0 24 24" {...stroke}>
+      <circle cx="5.5" cy="12" r="1.4" />
+      <circle cx="12" cy="12" r="1.4" />
+      <circle cx="18.5" cy="12" r="1.4" />
+    </svg>
+  ),
   inbox: () => (
     <svg viewBox="0 0 24 24" {...stroke}>
       <path d="M4 13l2.5-8h11L20 13v6H4z" />

@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { Field } from '../components/Field'
-import { problemText, useLang, useT } from '../i18n'
+import { fill, problemText, useLang, useT } from '../i18n'
 import { api, ApiError, type SellerSettings as Settings } from '../lib/api'
 import { DISTRICTS } from '../lib/districts'
 
@@ -62,6 +62,55 @@ export function SellerSettings() {
           onChange={(e) => set({ free_delivery_from_amd: e.target.value ? num(e.target.value) : null })}
         />
         <Field label={t('response_hours')} inputMode="numeric" value={s.offer_response_hours} onChange={(e) => set({ offer_response_hours: num(e.target.value) })} />
+        <Field
+          label={t('small_order_fee')}
+          hint={t('small_order_hint')}
+          inputMode="numeric"
+          value={s.small_order_fee_amd ?? ''}
+          onChange={(e) => set({ small_order_fee_amd: e.target.value ? num(e.target.value) : null })}
+        />
+      </section>
+      <section className="ticket stack-tight">
+        <header className="ticket-head">
+          <h2>{t('slots_title')}</h2>
+          <span className="muted small">{t('slots_hint')}</span>
+        </header>
+        <div className="form-grid">
+          <Field label={t('window_from')} type="time" value={s.window_from.slice(0, 5)} onChange={(e) => set({ window_from: e.target.value })} />
+          <Field label={t('window_to')} type="time" value={s.window_to.slice(0, 5)} onChange={(e) => set({ window_to: e.target.value })} />
+        </div>
+        <div className="field">
+          <span>{t('slot_hours')}</span>
+          <div className="dial-presets">
+            {[0, 1, 2, 3].map((h) => (
+              <button type="button" key={h} className={s.slot_hours === h ? 'on' : ''} onClick={() => set({ slot_hours: h })}>
+                {h === 0 ? t('slot_none') : fill(t('slot_n_hours'), { n: h })}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="ticket stack-tight">
+        <header className="ticket-head">
+          <h2>⚡ {t('express_title')}</h2>
+          <span className="muted small">{t('express_hint')}</span>
+        </header>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={s.express_fee_amd !== null}
+            onChange={(e) => set({ express_fee_amd: e.target.checked ? s.express_fee_amd ?? 0 : null })}
+          />
+          {t('express_on')}
+        </label>
+        {s.express_fee_amd !== null && (
+          <div className="form-grid">
+            <Field label={t('express_fee')} inputMode="numeric" value={s.express_fee_amd || ''} onChange={(e) => set({ express_fee_amd: num(e.target.value) })} />
+            <Field label={t('express_until')} type="time" value={s.express_until.slice(0, 5)} onChange={(e) => set({ express_until: e.target.value })} />
+            <Field label={t('express_hours')} inputMode="numeric" value={s.express_hours} onChange={(e) => set({ express_hours: num(e.target.value) })} />
+            <Field label={t('express_min')} inputMode="numeric" value={s.express_min_amd || ''} onChange={(e) => set({ express_min_amd: num(e.target.value) })} />
+          </div>
+        )}
       </section>
       <section className="ticket">
         <label className="field">
