@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
@@ -186,6 +186,19 @@ class CartLineOut(BaseModel):
     problems: list[str]
 
 
+class SlotOut(BaseModel):
+    start: time
+    end: time
+
+
+class ExpressOut(BaseModel):
+    fee_amd: int
+    hours: int  # delivered within this many hours
+    until: time  # order before this time today
+    min_amd: int
+    problem: str | None  # why it is impossible now (express_too_late, ...); None: available
+
+
 class CartGroupOut(BaseModel):
     seller: SellerBrief
     lines: list[CartLineOut]
@@ -198,6 +211,9 @@ class CartGroupOut(BaseModel):
     delivery_date: date | None
     offer_response_hours: int  # how long the seller has to answer an offer
     problems: list[str]
+    small_order_fee_amd: int | None = None  # delivery price below the minimum; None: the minimum is a must
+    slots: list[SlotOut] = []  # delivery slots on delivery_date to pick from; empty: no choice
+    express: ExpressOut | None = None  # urgent delivery terms, if the seller offers it
 
 
 class CartOut(BaseModel):
@@ -231,8 +247,15 @@ class OrderOfferIn(BaseModel):
     percent_bp: int
 
 
+class DeliveryIn(BaseModel):
+    seller_id: uuid.UUID
+    slot_start: time | None = None
+    express: bool = False
+
+
 class CheckoutIn(BaseModel):
     address_id: uuid.UUID | None = None
+    deliveries: list[DeliveryIn] = []
     order_offers: list[OrderOfferIn] = []
     note: str | None = None
 
@@ -310,6 +333,9 @@ class OrderOut(BaseModel):
     buyer: SellerBrief
     seller: SellerBrief
     delivery_date: date | None
+    slot_from: time | None = None
+    slot_to: time | None = None
+    express: bool = False
     subtotal_amd: int
     discount_amd: int
     delivery_fee_amd: int
@@ -339,6 +365,9 @@ class OrderListItem(BaseModel):
     counterparty: SellerBrief
     total_amd: int
     delivery_date: date | None
+    slot_from: time | None = None
+    slot_to: time | None = None
+    express: bool = False
     created_at: datetime
     lines_count: int
     payment_status: PaymentStatus

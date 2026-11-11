@@ -52,6 +52,22 @@ CATEGORIES = [
 DISTRICTS = ["Kentron", "Arabkir", "Ajapnyak", "Davtashen", "Nor Nork"]
 
 
+# Delivery options shown in the demo: paid small orders, slots, urgent delivery
+DELIVERY_DEMO: dict[str, dict] = {
+    "Green Valley": {
+        "small_order_fee_amd": 2_500,
+        "window_from": time(9, 0),
+        "window_to": time(12, 0),
+        "slot_hours": 1,
+        "express_fee_amd": 3_000,
+        "express_until": time(15, 0),
+        "express_hours": 3,
+        "express_min_amd": 5_000,
+    },
+    "Լոռի Պանիր": {"window_from": time(10, 0), "window_to": time(18, 0), "slot_hours": 2},
+}
+
+
 def _name(hy: str, ru: str, en: str) -> dict:
     return {"hy": hy, "ru": ru, "en": en}
 
@@ -137,6 +153,7 @@ async def seed() -> None:
                     lead_days=1,
                     delivery_fee_amd=1_000,
                     free_delivery_from_amd=50_000,
+                    **DELIVERY_DEMO.get(org.display_name, {}),
                 )
             )
             s.add_all(DeliveryZone(seller_id=org.id, district=d) for d in DISTRICTS)

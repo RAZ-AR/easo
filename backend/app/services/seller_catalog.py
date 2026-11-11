@@ -258,6 +258,14 @@ class SettingsIn:
     delivery_fee_amd: int = 0
     free_delivery_from_amd: int | None = None
     offer_response_hours: int = 24
+    small_order_fee_amd: int | None = None
+    window_from: time = time(9, 0)
+    window_to: time = time(18, 0)
+    slot_hours: int = 0
+    express_fee_amd: int | None = None
+    express_until: time = time(12, 0)
+    express_hours: int = 3
+    express_min_amd: int = 0
     zones: list[ZoneIn] = field(default_factory=list)
     description: dict[str, str] | None = None  # "about us" on the supplier page, hy/ru/en
 
@@ -282,6 +290,17 @@ async def save_settings(
         problems.append({"code": "bad_amount"})
     if not 0 <= data.lead_days <= 14:
         problems.append({"field": "lead_days", "code": "bad_lead_days"})
+    if any(
+        v is not None and v < 0
+        for v in (data.small_order_fee_amd, data.express_fee_amd, data.express_min_amd)
+    ):
+        problems.append({"code": "bad_amount"})
+    if data.window_to <= data.window_from:
+        problems.append({"field": "window", "code": "bad_window"})
+    if data.slot_hours not in (0, 1, 2, 3, 4):
+        problems.append({"field": "slot_hours", "code": "bad_slot_hours"})
+    if not 1 <= data.express_hours <= 12:
+        problems.append({"field": "express_hours", "code": "bad_hours"})
     if not 1 <= data.offer_response_hours <= 72:
         problems.append({"field": "offer_response_hours", "code": "bad_hours"})
     if any(
@@ -297,6 +316,14 @@ async def save_settings(
     profile.delivery_fee_amd = data.delivery_fee_amd
     profile.free_delivery_from_amd = data.free_delivery_from_amd
     profile.offer_response_hours = data.offer_response_hours
+    profile.small_order_fee_amd = data.small_order_fee_amd
+    profile.window_from = data.window_from
+    profile.window_to = data.window_to
+    profile.slot_hours = data.slot_hours
+    profile.express_fee_amd = data.express_fee_amd
+    profile.express_until = data.express_until
+    profile.express_hours = data.express_hours
+    profile.express_min_amd = data.express_min_amd
     about = {k: v.strip()[:1000] for k, v in (data.description or {}).items() if k in LANGS and v.strip()}
     profile.description = about or None
     await session.execute(delete(DeliveryZone).where(DeliveryZone.seller_id == actor.org.id))

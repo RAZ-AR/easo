@@ -13,6 +13,8 @@ from app.domain.orders import (
     allowed_actions,
     compute_totals,
     delivery_date,
+    delivery_slots,
+    express_problem,
     is_valid_qty,
     transition,
 )
@@ -77,6 +79,35 @@ def test_delivery_date_cutoff_and_weekdays():
     assert delivery_date(tue_evening, time(16), 1).isoformat() == "2026-10-22"
     sat_evening = datetime(2026, 10, 24, 18, 0)
     assert delivery_date(sat_evening, time(16), 1, weekdays={1, 2, 3, 4, 5, 6}).isoformat() == "2026-10-26"
+
+
+def test_small_order_fee_and_express():
+    lines = [LineAmount(D(7), 550)]  # 3 850, below a 10 000 minimum
+    t = compute_totals(lines, delivery_fee_amd=1000, min_order_amd=10_000, small_order_fee_amd=2500)
+    assert (t.delivery_fee_amd, t.total_amd) == (2500, 6350)
+    # urgent delivery is paid even when delivery itself is free
+    t = compute_totals(
+        [LineAmount(D(30), 2000)], delivery_fee_amd=1000, free_delivery_from_amd=50_000, express_fee_amd=3000
+    )
+    assert (t.delivery_fee_amd, t.total_amd) == (3000, 63_000)
+
+
+def test_delivery_slots():
+    assert delivery_slots(time(9), time(12), 1) == [
+        (time(9), time(10)),
+        (time(10), time(11)),
+        (time(11), time(12)),
+    ]
+    assert delivery_slots(time(9), time(12), 2) == [(time(9), time(11))]
+    assert delivery_slots(time(9), time(12), 0) == []
+
+
+def test_express_conditions():
+    tue = datetime(2026, 10, 20, 10, 0)
+    assert express_problem(tue, time(12), None, 6000, 5000) is None
+    assert express_problem(tue.replace(hour=13), time(12), None, 6000, 5000) == "express_too_late"
+    assert express_problem(tue, time(12), {1, 3}, 6000, 5000) == "express_not_today"
+    assert express_problem(tue, time(12), None, 4000, 5000) == "express_below_min"
 
 
 def test_qty_steps():

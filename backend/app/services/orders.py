@@ -154,6 +154,9 @@ async def recompute(session: AsyncSession, order: Order) -> None:
         discount_bp=await order_discount_bp(session, order),
         delivery_fee_amd=profile.delivery_fee_amd if profile else 0,
         free_delivery_from_amd=profile.free_delivery_from_amd if profile else None,
+        min_order_amd=profile.min_order_amd if profile else 0,
+        small_order_fee_amd=profile.small_order_fee_amd if profile else None,
+        express_fee_amd=order.express_fee_amd or 0,
     )
     order.subtotal_amd = totals.subtotal_amd
     order.discount_amd = totals.discount_amd

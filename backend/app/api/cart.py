@@ -16,11 +16,14 @@ from app.schemas import (
     CartLineOut,
     CartOut,
     CheckoutIn,
+    ExpressOut,
     SellerBrief,
+    SlotOut,
     SuggestionOut,
 )
 from app.services import cart as cart_svc
 from app.services import suggestions as suggestion_svc
+from app.services.checkout import DeliveryChoice
 from app.services.checkout import checkout as do_checkout
 
 from .orders import order_out
@@ -66,6 +69,19 @@ async def _cart_out(session: Session, actor: CurrentActor, address_id: uuid.UUID
                     g.profile.offer_response_hours if g.profile else get_settings().offer_response_hours
                 ),
                 problems=g.problems,
+                small_order_fee_amd=g.profile.small_order_fee_amd if g.profile else None,
+                slots=[SlotOut(start=a, end=b) for a, b in g.slots],
+                express=(
+                    ExpressOut(
+                        fee_amd=g.profile.express_fee_amd,
+                        hours=g.profile.express_hours,
+                        until=g.profile.express_until,
+                        min_amd=g.profile.express_min_amd,
+                        problem=g.express_problem,
+                    )
+                    if g.profile and g.profile.express_fee_amd is not None
+                    else None
+                ),
             )
         )
     return CartOut(
@@ -146,6 +162,7 @@ async def checkout(
         address_id=body.address_id,
         order_offers={o.seller_id: o.percent_bp for o in body.order_offers},
         note=body.note,
+        deliveries={d.seller_id: DeliveryChoice(d.slot_start, d.express) for d in body.deliveries},
     )
     result = {"orders": [await order_out(session, actor, o) for o in orders]}
     idempotency.store(session, actor.org.id, idempotency_key, "checkout", 201, result)

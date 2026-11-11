@@ -207,6 +207,17 @@ class SellerProfile(Timestamped, Base):
     lead_days: Mapped[int] = mapped_column(SmallInteger, default=1)
     delivery_fee_amd: Mapped[int] = mapped_column(Amd, default=0)
     free_delivery_from_amd: Mapped[int | None] = mapped_column(Amd)
+    # Below the minimum the buyer may still order, paying this delivery fee; None: the minimum is a must
+    small_order_fee_amd: Mapped[int | None] = mapped_column(Amd)
+    # Delivery window on the delivery day, cut into slots of slot_hours (0: no slots)
+    window_from: Mapped[time] = mapped_column(Time, default=time(9, 0), server_default="09:00")
+    window_to: Mapped[time] = mapped_column(Time, default=time(18, 0), server_default="18:00")
+    slot_hours: Mapped[int] = mapped_column(SmallInteger, default=0, server_default="0")
+    # Urgent delivery the same day: ordered before express_until, delivered within express_hours, for a fee
+    express_fee_amd: Mapped[int | None] = mapped_column(Amd)
+    express_until: Mapped[time] = mapped_column(Time, default=time(12, 0), server_default="12:00")
+    express_hours: Mapped[int] = mapped_column(SmallInteger, default=3, server_default="3")
+    express_min_amd: Mapped[int] = mapped_column(Amd, default=0, server_default="0")
     offer_response_hours: Mapped[int] = mapped_column(SmallInteger, default=24)
     logo_url: Mapped[str | None] = mapped_column(String(500))
 

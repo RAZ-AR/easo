@@ -94,6 +94,14 @@ class SettingsIO(BaseModel):
     delivery_fee_amd: int = 0
     free_delivery_from_amd: int | None = None
     offer_response_hours: int = 24
+    small_order_fee_amd: int | None = None
+    window_from: time = time(9, 0)
+    window_to: time = time(18, 0)
+    slot_hours: int = 0
+    express_fee_amd: int | None = None
+    express_until: time = time(12, 0)
+    express_hours: int = 3
+    express_min_amd: int = 0
     zones: list[ZoneIO] = []
     description: dict[str, str] | None = None
 
@@ -274,6 +282,14 @@ def _settings_out(profile, zones) -> SettingsIO:
         delivery_fee_amd=profile.delivery_fee_amd,
         free_delivery_from_amd=profile.free_delivery_from_amd,
         offer_response_hours=profile.offer_response_hours,
+        small_order_fee_amd=profile.small_order_fee_amd,
+        window_from=profile.window_from,
+        window_to=profile.window_to,
+        slot_hours=profile.slot_hours,
+        express_fee_amd=profile.express_fee_amd,
+        express_until=profile.express_until,
+        express_hours=profile.express_hours,
+        express_min_amd=profile.express_min_amd,
         description=profile.description,
         zones=[ZoneIO(district=z.district, weekdays=z.weekdays) for z in zones],
     )

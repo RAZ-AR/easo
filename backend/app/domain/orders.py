@@ -84,13 +84,25 @@ def compute_totals(
     discount_bp: int = 0,
     delivery_fee_amd: int = 0,
     free_delivery_from_amd: int | None = None,
+    min_order_amd: int = 0,
+    small_order_fee_amd: int | None = None,
+    express_fee_amd: int = 0,
 ) -> Totals:
-    """Order-level discount (basis points) applies to goods only; delivery is free above the threshold."""
+    """Order-level discount (basis points) applies to goods only; delivery is free above the threshold.
+
+    Below the seller's minimum the delivery costs small_order_fee_amd (when the seller allows small orders);
+    urgent delivery adds express_fee_amd on top, free delivery or not.
+    """
     subtotal = sum(line_total_amd(li.unit_price_amd, li.qty) for li in lines)
     discount = int((Decimal(subtotal) * discount_bp / 10_000).quantize(Decimal(1), rounding="ROUND_HALF_UP"))
     goods = subtotal - discount
+    if subtotal == 0:
+        return Totals(0, 0, 0, 0)
     free = free_delivery_from_amd is not None and goods >= free_delivery_from_amd
-    fee = 0 if free or subtotal == 0 else delivery_fee_amd
+    fee = 0 if free else delivery_fee_amd
+    if small_order_fee_amd is not None and subtotal < min_order_amd:
+        fee = max(fee, small_order_fee_amd)
+    fee += express_fee_amd
     return Totals(subtotal, discount, fee, goods + fee)
 
 
@@ -104,6 +116,32 @@ def delivery_date(
         if not weekdays or day.isoweekday() in weekdays:
             return day
     raise ValueError("seller has no delivery days")
+
+
+def delivery_slots(window_from: time, window_to: time, hours: int) -> list[tuple[time, time]]:
+    """The delivery window cut into slots of `hours` (0: no slots). A last short piece is dropped."""
+    if hours <= 0 or window_to <= window_from:
+        return []
+    out: list[tuple[time, time]] = []
+    start = datetime.combine(date.min, window_from)
+    end = datetime.combine(date.min, window_to)
+    while start + timedelta(hours=hours) <= end:
+        out.append((start.time(), (start + timedelta(hours=hours)).time()))
+        start += timedelta(hours=hours)
+    return out
+
+
+def express_problem(
+    now_local: datetime, until: time, weekdays: set[int] | None, subtotal_amd: int, min_amd: int
+) -> str | None:
+    """Why urgent same-day delivery is not possible right now, or None when it is."""
+    if now_local.time() >= until:
+        return "express_too_late"
+    if weekdays and now_local.isoweekday() not in weekdays:
+        return "express_not_today"
+    if subtotal_amd < min_amd:
+        return "express_below_min"
+    return None
 
 
 def is_valid_qty(qty: Decimal, min_qty: Decimal, step: Decimal) -> bool:

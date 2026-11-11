@@ -1,12 +1,13 @@
 """Cart, checkouts, per-seller orders, order lines, event journal, claims."""
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from enum import StrEnum
 
 from sqlalchemy import (
     ARRAY,
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -15,6 +16,7 @@ from sqlalchemy import (
     Sequence,
     String,
     Text,
+    Time,
     UniqueConstraint,
     func,
     text,
@@ -119,6 +121,12 @@ class Order(UUIDPk, Timestamped, Base):
     address_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("addresses.id", ondelete="SET NULL"))
     status: Mapped[OrderStatus] = mapped_column(str_enum(OrderStatus), index=True)
     delivery_date: Mapped[date | None] = mapped_column(Date)
+    # The chosen delivery slot on delivery_date (None: any time the seller delivers)
+    slot_from: Mapped[time | None] = mapped_column(Time)
+    slot_to: Mapped[time | None] = mapped_column(Time)
+    # Urgent same-day delivery; its fee is part of delivery_fee_amd and kept here as a snapshot
+    express: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    express_fee_amd: Mapped[int] = mapped_column(Amd, default=0, server_default="0")
     subtotal_amd: Mapped[int] = mapped_column(Amd, default=0)
     discount_amd: Mapped[int] = mapped_column(Amd, default=0)  # order-level negotiated discount
     delivery_fee_amd: Mapped[int] = mapped_column(Amd, default=0)

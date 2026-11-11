@@ -264,6 +264,27 @@ async def test_auto_accept_after_48h(client, as_user, sessionmaker):
     assert (await client.get(f"/orders/{order['id']}", headers=arax)).json()["status"] == "accepted"
 
 
+async def test_small_order_pays_delivery_and_picks_a_slot(client, as_user):
+    arax = await as_user("arax")
+    cart = await put(
+        client, arax, await product_id(client, arax, "Cucumbers"), 7
+    )  # Green Valley: 3 850 < 10 000
+    [g] = cart["groups"]
+    assert cart["problems"] == [] and g["missing_amd"] == 6150
+    assert (g["small_order_fee_amd"], g["delivery_fee_amd"], g["total_amd"]) == (2500, 2500, 6350)
+    assert [s["start"] for s in g["slots"]] == ["09:00:00", "10:00:00", "11:00:00"]
+    assert g["express"]["fee_amd"] == 3000 and g["express"]["hours"] == 3
+    seller = g["seller"]["id"]
+
+    r = await checkout(client, arax, deliveries=[{"seller_id": seller, "slot_start": "12:30"}])
+    assert r.status_code == 422 and r.json()["details"]["problems"][0]["code"] == "bad_slot"
+    r = await checkout(client, arax, deliveries=[{"seller_id": seller, "slot_start": "10:00"}])
+    assert r.status_code == 201, r.text
+    [order] = r.json()["orders"]
+    assert (order["slot_from"], order["slot_to"], order["express"]) == ("10:00:00", "11:00:00", False)
+    assert (order["delivery_fee_amd"], order["total_amd"]) == (2500, 6350)
+
+
 # --- validation, permissions, isolation ------------------------------------------------------------------
 
 

@@ -6,14 +6,22 @@ and checkout refuses to proceed while it reports any problem.
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain import negotiation as neg
-from app.domain.orders import LineAmount, Totals, compute_totals, delivery_date, is_valid_qty
+from app.domain.orders import (
+    LineAmount,
+    Totals,
+    compute_totals,
+    delivery_date,
+    delivery_slots,
+    express_problem,
+    is_valid_qty,
+)
 from app.domain.pricing import UnitPrice, line_total_amd
 from app.models import (
     Address,
@@ -50,6 +58,9 @@ class CartGroup:
     problems: list[str] = field(default_factory=list)
     missing_amd: int = 0  # how much is missing up to the seller's minimum order
     rules: RuleBook | None = None
+    slots: list[tuple[time, time]] = field(default_factory=list)
+    express: bool = False  # the buyer chose urgent delivery (and it is counted in totals)
+    express_problem: str | None = "express_off"  # why urgent delivery is impossible now; None: possible
 
 
 @dataclass
@@ -87,7 +98,9 @@ async def build_cart(
     now: datetime,
     address_id: uuid.UUID | None = None,
     lock: bool = False,
+    express: set[uuid.UUID] | None = None,
 ) -> CartView:
+    """express: sellers the buyer wants urgent delivery from; their fee is counted in totals."""
     stmt = select(CartItem).where(CartItem.buyer_id == actor.org.id).order_by(CartItem.created_at)
     if lock:
         stmt = stmt.with_for_update()
@@ -156,31 +169,54 @@ async def build_cart(
                     line.problems.append(problem)
             lines.append(line)
 
+        seller_zones = zones.get(seller_id, [])
+        weekdays: set[int] | None = None
+        zone_problem = False
+        if seller_zones:
+            district = address.district if address else None
+            matching = [z for z in seller_zones if district is None or z.district == district]
+            zone_problem = not matching
+            weekdays = {d for z in (matching or seller_zones) for d in z.weekdays}
+
+        amounts = [LineAmount(Decimal(li.item.qty), li.unit_price.amount_amd) for li in lines]
+        subtotal = compute_totals(amounts).subtotal_amd
+        min_order = profile.min_order_amd if profile else 0
+        urgent_problem = "express_off"
+        if profile and profile.express_fee_amd is not None:
+            urgent_problem = express_problem(
+                local(now), profile.express_until, weekdays, subtotal, profile.express_min_amd
+            )
+        urgent = seller_id in (express or set())
         totals = compute_totals(
-            [LineAmount(Decimal(li.item.qty), li.unit_price.amount_amd) for li in lines],
+            amounts,
             delivery_fee_amd=profile.delivery_fee_amd if profile else 0,
             free_delivery_from_amd=profile.free_delivery_from_amd if profile else None,
+            min_order_amd=min_order,
+            small_order_fee_amd=profile.small_order_fee_amd if profile else None,
+            express_fee_amd=(profile.express_fee_amd or 0) if urgent and profile else 0,
         )
-        group = CartGroup(seller, profile, lines, totals, None, rules=rules)
+        group = CartGroup(seller, profile, lines, totals, None, rules=rules, express=urgent)
+        group.express_problem = urgent_problem
         if seller.id == actor.org.id:
             group.problems.append("own_products")
         elif not can_sell(seller):
             group.problems.append("seller_unavailable")
-        min_order = profile.min_order_amd if profile else 0
         if totals.subtotal_amd < min_order:
-            group.problems.append("min_order_not_reached")
             group.missing_amd = min_order - totals.subtotal_amd
-
-        seller_zones = zones.get(seller_id, [])
-        weekdays: set[int] | None = None
-        if seller_zones:
-            district = address.district if address else None
-            matching = [z for z in seller_zones if district is None or z.district == district]
-            if not matching:
-                group.problems.append("no_delivery_to_district")
-            weekdays = {d for z in (matching or seller_zones) for d in z.weekdays}
+            if profile is None or profile.small_order_fee_amd is None:
+                group.problems.append("min_order_not_reached")
+        if zone_problem:
+            group.problems.append("no_delivery_to_district")
+        if urgent and urgent_problem:
+            group.problems.append(urgent_problem)
         if profile:
-            group.delivery_date = delivery_date(local(now), profile.cutoff_time, profile.lead_days, weekdays)
+            group.slots = delivery_slots(profile.window_from, profile.window_to, profile.slot_hours)
+            if urgent and not urgent_problem:
+                group.delivery_date = local(now).date()
+            else:
+                group.delivery_date = delivery_date(
+                    local(now), profile.cutoff_time, profile.lead_days, weekdays
+                )
         groups.append(group)
     return CartView(groups, address)
 
